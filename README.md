@@ -30,7 +30,7 @@ PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
 - `addr` - Local IP address for tunnel. Must be equal to `peer` value on the remote host. Required.
 - `peer` - Remote IP address for tunnel. Must be equal to `addr` value on the remote host. Required.
 - `rblk` - Disk block number to read packets from. Must be equal to `wblk` value on the remote host. Required.
-- `wblk` - Disk block bumber to write packets to. Must be equal to `rblk` value on the remote host. Required.
+- `wblk` - Disk block number to write packets to. Must be equal to `rblk` value on the remote host. Required.
 - `txqlen` - Transmit queue length. Optional.
 - `rxqlen` - Transmit queue length. Optional.
 - `hz` - Frequency in Hz at which the writing and polling operations are performed. Must be equal to `hz` value on the remote host. Optional.
