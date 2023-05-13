@@ -3,16 +3,13 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-
-	"github.com/sony/sonyflake"
+	"math/rand"
 )
 
 type Block struct {
 	id      uint64
 	payload []byte
 }
-
-var sf = sonyflake.NewSonyflake(sonyflake.Settings{})
 
 const BlockSize = 512
 const IDSize = 8
@@ -34,10 +31,7 @@ func NewBlockWithUniqueId(payload []byte) Block {
 	if len(payload) > PayloadSize {
 		panic(fmt.Sprintf("payload size is too big: %d", len(payload)))
 	}
-	id, err := sf.NextID()
-	if err != nil {
-		panic("unable to generate unique id")
-	}
+	id := rand.Uint64()
 	block := Block{
 		id:      id,
 		payload: payload,
