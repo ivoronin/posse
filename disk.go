@@ -11,12 +11,12 @@ type Disk struct {
 	wOff int64
 }
 
-func NewDisk(diskPath string, rOff int64, wOff int64) (*Disk, error) {
+func NewDisk(diskPath string, rOff uint64, wOff uint64) (*Disk, error) {
 	var err error
 
 	disk := Disk{
-		rOff: rOff * BlockSize,
-		wOff: wOff * BlockSize,
+		rOff: int64(rOff * BlockSize),
+		wOff: int64(wOff * BlockSize),
 	}
 
 	disk.file, err = os.OpenFile(diskPath, os.O_RDWR|syscall.O_DIRECT, 0)

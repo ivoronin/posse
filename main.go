@@ -75,31 +75,24 @@ func main() {
 	tunName := flag.String("tun", "", "tun name")
 	localAddr := flag.String("addr", "", "local address")
 	remoteAddr := flag.String("peer", "", "remote address")
-	rBlk := flag.Int64("rblk", -1, "disk block to read packets from")
-	wBlk := flag.Int64("wblk", -1, "disk block to write packets to")
+	rBlk := flag.Uint64("rblk", 0, "disk block to read packets from")
+	wBlk := flag.Uint64("wblk", 0, "disk block to write packets to")
 	txQLen := flag.Int("txqlen", 16, "tx queue length")
 	rxQLen := flag.Int("rxqlen", 16, "rx queue length")
 	hz := flag.Int("hz", 10, "polling and writing frequency in hz")
 	flag.Parse()
 
-	if *diskPath == "" {
-		errx("device path must be set")
+	mandatoryFlags := []string{"disk", "addr", "peer", "rblk", "wblk"}
+	seenFlags := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) { seenFlags[f.Name] = true })
+	for _, flagName := range mandatoryFlags {
+		if !seenFlags[flagName] {
+			errx("%s must be set", flagName)
+		}
 	}
 
-	if *localAddr == "" {
-		errx("local address must be set")
-	}
-
-	if *remoteAddr == "" {
-		errx("remote address must be set")
-	}
-
-	if *rBlk < 0 {
-		errx("device read offset must be set and be positive")
-	}
-
-	if *wBlk < 0 {
-		errx("device write offset must be set and be positive")
+	if rBlk == wBlk {
+		errx("rblk and wblk values can't be equal")
 	}
 
 	tun, err := NewTUN(*tunName, payloadMaxSize, *localAddr, *remoteAddr)
