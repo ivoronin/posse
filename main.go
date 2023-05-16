@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-type Packet struct {
-	id      uint64
-	payload [PayloadSize]byte
-}
-
 func sleepUntilNextTxTime(lastTxTime time.Time, interval time.Duration) {
 	timeSinceLastTx := time.Now().Sub(lastTxTime)
 	if timeSinceLastTx < interval {
