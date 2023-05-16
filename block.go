@@ -53,7 +53,7 @@ func NewBlockFromBytes(buf []byte) *Block {
 	return block
 }
 
-func NewBlockWithUniqueId(payload []byte) *Block {
+func NewBlockWithPayload(payload []byte) *Block {
 	if len(payload) > payloadMaxSize {
 		panicf("payload size is too big: %d", len(payload))
 	}
