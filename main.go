@@ -68,9 +68,9 @@ func tunRx(tun *TUN, txq chan<- []byte) {
 }
 
 // read packets from rx queue and writes them to tun device
-func tunTx(run *TUN, rxq <-chan []byte) {
+func tunTx(tun *TUN, rxq <-chan []byte) {
 	for buf := range rxq {
-		_, err := run.Write(buf)
+		_, err := tun.Write(buf)
 		if err != nil {
 			log.Printf("error writing to network device: %s", err)
 			continue
