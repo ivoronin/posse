@@ -15,11 +15,10 @@ This tool creates a TUN interface and writes incoming packets to a designated di
 host1# posse -disk /dev/sdb -rblk 0 -wblk 1 -addr 10.10.10.1/32 -peer 10.10.10.2/32
 host2# posse -disk /dev/sdb -rblk 1 -wblk 0 -addr 10.10.10.2/32 -peer 10.10.10.1/32
 host1# ping 10.10.10.2
-ping -i 0.02 10.10.10.2
 PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
-64 bytes from 10.10.10.2: icmp_seq=4 ttl=64 time=44.4 ms
-64 bytes from 10.10.10.2: icmp_seq=9 ttl=64 time=29.4 ms
-64 bytes from 10.10.10.2: icmp_seq=13 ttl=64 time=38.5 ms
+64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=136 ms
+64 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=140 ms
+64 bytes from 10.10.10.2: icmp_seq=3 ttl=64 time=145 ms
 ^C
 ```
 
