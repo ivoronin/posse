@@ -32,4 +32,4 @@ PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
 - `wblk` - Disk block number to write packets to. Must be equal to `rblk` value on the remote host. Required.
 - `txqlen` - Transmit queue length. Optional.
 - `rxqlen` - Transmit queue length. Optional.
-- `hz` - Frequency in Hz at which the writing and polling operations are performed. Must be equal to `hz` value on the remote host. Optional.
+- `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Optional.
