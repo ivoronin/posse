@@ -9,7 +9,7 @@ import (
 )
 
 func sleepUntilNextTxTime(lastTxTime time.Time, interval time.Duration) {
-	timeSinceLastTx := time.Now().Sub(lastTxTime)
+	timeSinceLastTx := time.Since(lastTxTime)
 	if timeSinceLastTx < interval {
 		time.Sleep(interval - timeSinceLastTx)
 	}
