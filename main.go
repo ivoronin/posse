@@ -15,18 +15,24 @@ func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
 			log.Printf("error reading from disk: %s", err)
 			continue
 		}
-		if block.id != prevId {
-			// skip first packet, because it can be the old one
-			if prevId != 0 {
-				err = block.Validate()
-				if err != nil {
-					log.Printf("block validation error: %s", err)
-					continue
-				}
-				rxq <- block.payload
-			}
-			prevId = block.id
+		// block doesn't changed since last read, nothing to do
+		if block.id == prevId {
+			continue
 		}
+
+		// skip first packet, because it can be the old one
+		if prevId == 0 {
+			prevId = block.id
+			continue
+		}
+		prevId = block.id
+
+		err = block.Validate()
+		if err != nil {
+			log.Printf("block validation error: %s", err)
+			continue
+		}
+		rxq <- block.payload
 	}
 }
 
