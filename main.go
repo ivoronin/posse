@@ -27,8 +27,9 @@ func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
 		if block.id != prevId {
 			// skip first packet, because it can be the old one
 			if prevId != 0 {
-				if !block.VerifyCRC() {
-					log.Printf("wrong block checksum")
+				err = block.Validate()
+				if err != nil {
+					log.Printf("block validation error: %s", err)
 					goto finish
 				}
 				rxq <- block.payload
@@ -57,7 +58,7 @@ func diskTx(disk *Disk, interval time.Duration, txq <-chan []byte) {
 // reads packets from tun device and puts them into tx qeueue
 func tunRx(tun *TUN, txq chan<- []byte) {
 	for {
-		buf := make([]byte, PayloadSize)
+		buf := make([]byte, payloadMaxSize)
 		_, err := tun.Read(buf)
 		if err != nil {
 			log.Printf("error reading from network device: %s", err)
@@ -110,7 +111,7 @@ func main() {
 		errx("device write offset must be set and be positive")
 	}
 
-	tun, err := NewTUN(*tunName, PayloadSize, *localAddr, *remoteAddr)
+	tun, err := NewTUN(*tunName, payloadMaxSize, *localAddr, *remoteAddr)
 	if err != nil {
 		errx("error setting up tun device: %s", err)
 	}
