@@ -19,7 +19,7 @@ func NewDisk(diskPath string, rOff uint64, wOff uint64) (*Disk, error) {
 		wOff: int64(wOff * BlockSize),
 	}
 
-	disk.file, err = os.OpenFile(diskPath, os.O_RDWR|syscall.O_DIRECT, 0)
+	disk.file, err = os.OpenFile(diskPath, os.O_RDWR|os.O_SYNC|syscall.O_DIRECT, 0)
 	if err != nil {
 		return nil, err
 	}
