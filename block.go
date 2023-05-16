@@ -3,50 +3,55 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 	"math/rand"
 )
 
 type Block struct {
 	id      uint64
+	crc     uint32
 	payload []byte
 }
 
 const BlockSize = 512
 const IDSize = 8
-const PayloadSize = BlockSize - IDSize
+const CRCSize = crc32.Size
+const HeaderSize = IDSize + CRCSize
+const PayloadSize = BlockSize - HeaderSize
 
 func NewBlockFromBytes(buf []byte) *Block {
-	var block Block
 	if len(buf) != BlockSize {
 		panic(fmt.Sprintf("invalid block size: %d", len(buf)))
 	}
 
+	block := new(Block)
 	block.id = binary.BigEndian.Uint64(buf)
-	block.payload = buf[IDSize:]
+	block.crc = binary.BigEndian.Uint32(buf[IDSize:])
+	block.payload = buf[HeaderSize:]
 
-	return &block
+	return block
 }
 
-func NewBlockWithUniqueId(payload []byte) Block {
+func NewBlockWithUniqueId(payload []byte) *Block {
 	if len(payload) > PayloadSize {
 		panic(fmt.Sprintf("payload size is too big: %d", len(payload)))
 	}
-	id := rand.Uint64()
-	block := Block{
-		id:      id,
-		payload: payload,
-	}
+	block := new(Block)
+	block.id = rand.Uint64()
+	block.crc = crc32.ChecksumIEEE(payload)
+	block.payload = payload
+
 	return block
 }
 
 func (block *Block) ToBytes() []byte {
-	buf := make([]byte, IDSize)
+	buf := make([]byte, BlockSize)
 	binary.BigEndian.PutUint64(buf, block.id)
-	buf = append(buf, block.payload...)
-
-	if len(buf) > BlockSize {
-		panic(fmt.Sprintf("invalid block size: %d", len(buf)))
-	}
-
+	binary.BigEndian.PutUint32(buf[IDSize:], block.crc)
+	copy(buf[HeaderSize:], block.payload)
 	return buf
+}
+
+func (block *Block) VerifyCRC() bool {
+	return crc32.ChecksumIEEE(block.payload) == block.crc
 }

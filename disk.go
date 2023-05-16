@@ -41,7 +41,7 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 	return block, nil
 }
 
-func (disk *Disk) WriteBlock(block Block) error {
+func (disk *Disk) WriteBlock(block *Block) error {
 	buf := block.ToBytes()
 	_, err := disk.file.WriteAt(buf, disk.wOff)
 	if err != nil {

@@ -34,6 +34,10 @@ func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
 		if block.id != prevId {
 			// skip first packet, because it can be the old one
 			if prevId != 0 {
+				if !block.VerifyCRC() {
+					log.Printf("wrong block checksum")
+					goto finish
+				}
 				rxq <- block.payload
 			}
 			prevId = block.id
@@ -59,8 +63,8 @@ func diskTx(disk *Disk, interval time.Duration, txq <-chan []byte) {
 
 // reads packets from tun device and puts them into tx qeueue
 func tunRx(tun *TUN, txq chan<- []byte) {
-	buf := make([]byte, PayloadSize)
 	for {
+		buf := make([]byte, PayloadSize)
 		_, err := tun.Read(buf)
 		if err != nil {
 			log.Printf("error reading from network device: %s", err)
