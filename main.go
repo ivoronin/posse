@@ -83,9 +83,9 @@ func main() {
 	remoteAddr := flag.String("peer", "", "remote address")
 	rBlk := flag.Uint64("rblk", 0, "disk block to read packets from")
 	wBlk := flag.Uint64("wblk", 0, "disk block to write packets to")
-	txQLen := flag.Int("txqlen", 16, "tx queue length")
-	rxQLen := flag.Int("rxqlen", 16, "rx queue length")
-	hz := flag.Int("hz", 10, "polling and writing frequency in hz")
+	txQLen := flag.Uint("txqlen", 16, "tx queue length")
+	rxQLen := flag.Uint("rxqlen", 16, "rx queue length")
+	hz := flag.Uint("hz", 10, "polling and writing frequency in hz")
 	flag.Parse()
 
 	mandatoryFlags := []string{"disk", "addr", "peer", "rblk", "wblk"}
