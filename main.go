@@ -37,7 +37,7 @@ func diskTx(disk *Disk, wt *time.Ticker, txq <-chan []byte) {
 			continue
 		}
 		payload := <-txq
-		block := NewBlockWithUniqueId(payload)
+		block := NewBlockWithPayload(payload)
 		err := disk.WriteBlock(block)
 		if err != nil {
 			log.Printf("error writing to disk: %s", err)
