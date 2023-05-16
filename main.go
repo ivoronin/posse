@@ -15,7 +15,7 @@ func sleepUntilNextTxTime(lastTxTime time.Time, interval time.Duration) {
 
 // reads packets from disk and puts them into rx queue
 func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
-	var prevId uint64 = 0
+	var prevId uint32 = 0
 	var lastTxTime time.Time
 	for {
 		sleepUntilNextTxTime(lastTxTime, interval)

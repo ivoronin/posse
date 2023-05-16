@@ -8,7 +8,7 @@ import (
 )
 
 type Block struct {
-	id      uint64
+	id      uint32
 	crc     uint32
 	payload []byte
 }
@@ -36,7 +36,7 @@ func NewBlockFromBytes(buf []byte) *Block {
 	}
 
 	block := new(Block)
-	block.id = binary.BigEndian.Uint64(buf)
+	block.id = binary.BigEndian.Uint32(buf)
 	block.crc = binary.BigEndian.Uint32(buf[IDSize:])
 	block.payload = buf[HeaderSize:]
 
@@ -48,7 +48,7 @@ func NewBlockWithUniqueId(payload []byte) *Block {
 		panicf("payload size is too big: %d", len(payload))
 	}
 	block := new(Block)
-	block.id = rand.Uint64()
+	block.id = rand.Uint32()
 	block.crc = crc32.ChecksumIEEE(payload)
 	block.payload = payload
 
@@ -57,7 +57,7 @@ func NewBlockWithUniqueId(payload []byte) *Block {
 
 func (block *Block) ToBytes() []byte {
 	buf := alignedByteSlice(BlockSize, BlockSize)
-	binary.BigEndian.PutUint64(buf, block.id)
+	binary.BigEndian.PutUint32(buf, block.id)
 	binary.BigEndian.PutUint32(buf[IDSize:], block.crc)
 	copy(buf[HeaderSize:], block.payload)
 	return buf
