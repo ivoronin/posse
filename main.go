@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"os"
 	"time"
 )
 
@@ -80,11 +78,6 @@ func tunTx(run *TUN, rxq <-chan []byte) {
 	}
 }
 
-func die(fmts string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, fmts, args...)
-	os.Exit(1)
-}
-
 func main() {
 	diskPath := flag.String("disk", "", "disk path")
 	tunName := flag.String("tun", "", "tun name")
@@ -98,33 +91,33 @@ func main() {
 	flag.Parse()
 
 	if *diskPath == "" {
-		die("device path must be set")
+		errx("device path must be set")
 	}
 
 	if *localAddr == "" {
-		die("local address must be set")
+		errx("local address must be set")
 	}
 
 	if *remoteAddr == "" {
-		die("remote address must be set")
+		errx("remote address must be set")
 	}
 
 	if *rBlk < 0 {
-		die("device read offset must be set and be positive")
+		errx("device read offset must be set and be positive")
 	}
 
 	if *wBlk < 0 {
-		die("device write offset must be set and be positive")
+		errx("device write offset must be set and be positive")
 	}
 
 	tun, err := NewTUN(*tunName, PayloadSize, *localAddr, *remoteAddr)
 	if err != nil {
-		die("error setting up tun device: %s", err)
+		errx("error setting up tun device: %s", err)
 	}
 
 	disk, err := NewDisk(*diskPath, *rBlk, *wBlk)
 	if err != nil {
-		die("error setting up disk device: %s", err)
+		errx("error setting up disk device: %s", err)
 	}
 
 	// disk -> tun queue

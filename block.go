@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"hash/crc32"
 	"math/rand"
 	"unsafe"
@@ -33,7 +32,7 @@ func alignedByteSlice(size uint, align uint) []byte {
 
 func NewBlockFromBytes(buf []byte) *Block {
 	if len(buf) != BlockSize {
-		panic(fmt.Sprintf("invalid block size: %d", len(buf)))
+		panicf("invalid block size: %d", len(buf))
 	}
 
 	block := new(Block)
@@ -46,7 +45,7 @@ func NewBlockFromBytes(buf []byte) *Block {
 
 func NewBlockWithUniqueId(payload []byte) *Block {
 	if len(payload) > PayloadSize {
-		panic(fmt.Sprintf("payload size is too big: %d", len(payload)))
+		panicf("payload size is too big: %d", len(payload))
 	}
 	block := new(Block)
 	block.id = rand.Uint64()
