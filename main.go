@@ -8,7 +8,7 @@ import (
 
 // reads packets from disk and puts them into rx queue
 func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
-	var prevId uint32 = 0
+	var prevID uint32 = 0
 	for range rt.C {
 		block, err := disk.ReadBlock()
 		if err != nil {
@@ -16,23 +16,23 @@ func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
 			continue
 		}
 		// block doesn't changed since last read, nothing to do
-		if block.id == prevId {
+		if block.ID == prevID {
 			continue
 		}
 
 		// skip first packet, because it can be the old one
-		if prevId == 0 {
-			prevId = block.id
+		if prevID == 0 {
+			prevID = block.ID
 			continue
 		}
-		prevId = block.id
+		prevID = block.ID
 
 		err = block.Validate()
 		if err != nil {
 			log.Printf("block validation error: %s", err)
 			continue
 		}
-		rxq <- block.payload
+		rxq <- block.Payload
 	}
 }
 
@@ -55,7 +55,7 @@ func diskTx(disk *Disk, wt *time.Ticker, txq <-chan []byte) {
 // reads packets from tun device and puts them into tx qeueue
 func tunRx(tun *TUN, txq chan<- []byte) {
 	for {
-		buf := make([]byte, payloadMaxSize)
+		buf := make([]byte, PayloadMaxSize)
 		_, err := tun.Read(buf)
 		if err != nil {
 			log.Printf("error reading from tun: %s", err)
@@ -101,7 +101,7 @@ func main() {
 		errx("rblk and wblk values can't be equal")
 	}
 
-	tun, err := NewTUN(*tunName, payloadMaxSize, *localAddr, *remoteAddr)
+	tun, err := NewTUN(*tunName, PayloadMaxSize, *localAddr, *remoteAddr)
 	if err != nil {
 		errx("error setting up tun device: %s", err)
 	}
