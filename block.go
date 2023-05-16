@@ -19,8 +19,8 @@ const blockVersion = 1
 const BlockSize = 512
 
 const versionSize = 1
-const idSize = 8
-const crcSize = 8
+const idSize = 4
+const crcSize = 4
 
 const idOffset = versionSize
 const crcOffset = idOffset + idSize
