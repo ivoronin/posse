@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"math/rand"
+	"unsafe"
 )
 
 type Block struct {
@@ -18,6 +19,17 @@ const IDSize = 8
 const CRCSize = crc32.Size
 const HeaderSize = IDSize + CRCSize
 const PayloadSize = BlockSize - HeaderSize
+
+func alignedByteSlice(size uint, align uint) []byte {
+	bytes := make([]byte, size+align)
+	if align == 0 {
+		return bytes
+	}
+	gap := uintptr(unsafe.Pointer(&bytes[0])) & uintptr(align-1)
+	offset := align - uint(gap)
+	bytes = bytes[offset : offset+size]
+	return bytes
+}
 
 func NewBlockFromBytes(buf []byte) *Block {
 	if len(buf) != BlockSize {
@@ -45,7 +57,7 @@ func NewBlockWithUniqueId(payload []byte) *Block {
 }
 
 func (block *Block) ToBytes() []byte {
-	buf := make([]byte, BlockSize)
+	buf := alignedByteSlice(BlockSize, BlockSize)
 	binary.BigEndian.PutUint64(buf, block.id)
 	binary.BigEndian.PutUint32(buf[IDSize:], block.crc)
 	copy(buf[HeaderSize:], block.payload)
