@@ -6,56 +6,43 @@ import (
 	"time"
 )
 
-func sleepUntilNextTxTime(lastTxTime time.Time, interval time.Duration) {
-	timeSinceLastTx := time.Since(lastTxTime)
-	if timeSinceLastTx < interval {
-		time.Sleep(interval - timeSinceLastTx)
-	}
-}
-
 // reads packets from disk and puts them into rx queue
-func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
+func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
 	var prevId uint32 = 0
-	var lastTxTime time.Time
-	for {
-		sleepUntilNextTxTime(lastTxTime, interval)
-		func() {
-			block, err := disk.ReadBlock()
-			if err != nil {
-				log.Printf("error reading from disk: %s", err)
-				return
-			}
-			if block.id != prevId {
-				// skip first packet, because it can be the old one
-				if prevId != 0 {
-					err = block.Validate()
-					if err != nil {
-						log.Printf("block validation error: %s", err)
-						return
-					}
-					rxq <- block.payload
+	for range rt.C {
+		block, err := disk.ReadBlock()
+		if err != nil {
+			log.Printf("error reading from disk: %s", err)
+			continue
+		}
+		if block.id != prevId {
+			// skip first packet, because it can be the old one
+			if prevId != 0 {
+				err = block.Validate()
+				if err != nil {
+					log.Printf("block validation error: %s", err)
+					continue
 				}
-				prevId = block.id
+				rxq <- block.payload
 			}
-		}()
-		lastTxTime = time.Now()
+			prevId = block.id
+		}
 	}
 }
 
 // reads packets from tx queue and writes them to disk device
-func diskTx(disk *Disk, interval time.Duration, txq <-chan []byte) {
-	var lastTxTime time.Time
-	for payload := range txq {
-		sleepUntilNextTxTime(lastTxTime, interval)
-		func() {
-			block := NewBlockWithUniqueId(payload)
-			err := disk.WriteBlock(block)
-			if err != nil {
-				log.Printf("error writing to disk: %s", err)
-				return
-			}
-		}()
-		lastTxTime = time.Now()
+func diskTx(disk *Disk, wt *time.Ticker, txq <-chan []byte) {
+	for range wt.C {
+		if len(txq) == 0 {
+			continue
+		}
+		payload := <-txq
+		block := NewBlockWithUniqueId(payload)
+		err := disk.WriteBlock(block)
+		if err != nil {
+			log.Printf("error writing to disk: %s", err)
+			continue
+		}
 	}
 }
 
@@ -130,10 +117,12 @@ func main() {
 	// tun -> disk queue
 	txq := make(chan []byte, *txQLen)
 
-	delay := time.Millisecond * time.Duration(1000 / *hz)
+	tickDuration := time.Millisecond * time.Duration(1000 / *hz)
+	rt := time.NewTicker(tickDuration)
+	wt := time.NewTicker(tickDuration)
 
-	go diskRx(disk, delay, rxq)
-	go diskTx(disk, delay, txq)
+	go diskRx(disk, rt, rxq)
+	go diskTx(disk, wt, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
 
