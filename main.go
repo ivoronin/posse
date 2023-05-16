@@ -19,24 +19,25 @@ func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
 	var lastTxTime time.Time
 	for {
 		sleepUntilNextTxTime(lastTxTime, interval)
-		block, err := disk.ReadBlock()
-		if err != nil {
-			log.Printf("error reading from disk: %s", err)
-			goto finish
-		}
-		if block.id != prevId {
-			// skip first packet, because it can be the old one
-			if prevId != 0 {
-				err = block.Validate()
-				if err != nil {
-					log.Printf("block validation error: %s", err)
-					goto finish
-				}
-				rxq <- block.payload
+		func() {
+			block, err := disk.ReadBlock()
+			if err != nil {
+				log.Printf("error reading from disk: %s", err)
+				return
 			}
-			prevId = block.id
-		}
-	finish:
+			if block.id != prevId {
+				// skip first packet, because it can be the old one
+				if prevId != 0 {
+					err = block.Validate()
+					if err != nil {
+						log.Printf("block validation error: %s", err)
+						return
+					}
+					rxq <- block.payload
+				}
+				prevId = block.id
+			}
+		}()
 		lastTxTime = time.Now()
 	}
 }
@@ -46,11 +47,14 @@ func diskTx(disk *Disk, interval time.Duration, txq <-chan []byte) {
 	var lastTxTime time.Time
 	for payload := range txq {
 		sleepUntilNextTxTime(lastTxTime, interval)
-		block := NewBlockWithUniqueId(payload)
-		err := disk.WriteBlock(block)
-		if err != nil {
-			log.Printf("error writing to disk: %s", err)
-		}
+		func() {
+			block := NewBlockWithUniqueId(payload)
+			err := disk.WriteBlock(block)
+			if err != nil {
+				log.Printf("error writing to disk: %s", err)
+				return
+			}
+		}()
 		lastTxTime = time.Now()
 	}
 }
