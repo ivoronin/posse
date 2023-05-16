@@ -21,7 +21,7 @@ func diskRx(disk *Disk, interval time.Duration, rxq chan<- []byte) {
 		sleepUntilNextTxTime(lastTxTime, interval)
 		block, err := disk.ReadBlock()
 		if err != nil {
-			log.Printf("error reading block: %s", err)
+			log.Printf("error reading from disk: %s", err)
 			goto finish
 		}
 		if block.id != prevId {
@@ -49,7 +49,7 @@ func diskTx(disk *Disk, interval time.Duration, txq <-chan []byte) {
 		block := NewBlockWithUniqueId(payload)
 		err := disk.WriteBlock(block)
 		if err != nil {
-			log.Printf("error writing block to disk: %s", err)
+			log.Printf("error writing to disk: %s", err)
 		}
 		lastTxTime = time.Now()
 	}
@@ -61,7 +61,7 @@ func tunRx(tun *TUN, txq chan<- []byte) {
 		buf := make([]byte, payloadMaxSize)
 		_, err := tun.Read(buf)
 		if err != nil {
-			log.Printf("error reading from network device: %s", err)
+			log.Printf("error reading from tun: %s", err)
 			continue
 		}
 		txq <- buf
@@ -73,7 +73,7 @@ func tunTx(tun *TUN, rxq <-chan []byte) {
 	for buf := range rxq {
 		_, err := tun.Write(buf)
 		if err != nil {
-			log.Printf("error writing to network device: %s", err)
+			log.Printf("error writing to tun: %s", err)
 			continue
 		}
 	}

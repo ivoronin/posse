@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 )
@@ -22,7 +21,7 @@ func NewDisk(diskPath string, rOff int64, wOff int64) (*Disk, error) {
 
 	disk.file, err = os.OpenFile(diskPath, os.O_RDWR|syscall.O_DIRECT, 0)
 	if err != nil {
-		return nil, fmt.Errorf("error opening storage device: %s", err)
+		return nil, err
 	}
 
 	return &disk, nil
@@ -33,7 +32,7 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 
 	_, err := disk.file.ReadAt(buf, disk.rOff)
 	if err != nil {
-		return nil, fmt.Errorf("error reading block from disk device: %s", err)
+		return nil, err
 	}
 
 	block := NewBlockFromBytes(buf)
@@ -45,7 +44,7 @@ func (disk *Disk) WriteBlock(block *Block) error {
 	buf := block.ToBytes()
 	_, err := disk.file.WriteAt(buf, disk.wOff)
 	if err != nil {
-		return fmt.Errorf("error writing block to disk device: %s", err)
+		return err
 	}
 
 	return nil
