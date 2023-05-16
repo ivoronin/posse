@@ -20,7 +20,7 @@ const BlockSize = 512
 
 const versionSize = 1
 const idSize = 8
-const crcSize = crc32.Size
+const crcSize = 8
 
 const idOffset = versionSize
 const crcOffset = idOffset + idSize
