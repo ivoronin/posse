@@ -10,7 +10,10 @@ It is anticipated that there may be instances of packet drops and other minor in
 
 This tool creates a TUN interface and writes incoming packets to a designated disk at a specified block number (`wblk`). Simultaneously, it polls the other designated block (`rblk`) for changes and writes them to the TUN interface.
 
+![Diagram](posse.svg)
+
 ## Example
+
 ```
 host1# posse -disk /dev/sdb -rblk 0 -wblk 1 -addr 10.10.10.1/32 -peer 10.10.10.2/32
 host2# posse -disk /dev/sdb -rblk 1 -wblk 0 -addr 10.10.10.2/32 -peer 10.10.10.1/32
