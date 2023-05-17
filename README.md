@@ -33,3 +33,12 @@ PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
 - `txqlen` - Transmit queue length. Optional. Defaults to 16.
 - `rxqlen` - Transmit queue length. Optional. Defaults to 16.
 - `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Optional. Defaults to 10.
+
+## Performance
+The bandwidth is effectively limited by the frequency of transfers, which is set to 10 per second by default (see the `hz` flag). This value can be safely increased to 100 on most systems. The maximum feasible value for your configuration can be calculated by dividing 1000 by your shared disk response time in milliseconds. For example, if your disk has a response time of 5 ms, the `hz` flag can be set to 200.
+
+It is also recommended to change the TCP congestion control algorithm to BBR on both hosts:
+```
+# sysctl -w net.ipv4.tcp_congestion_control=bbr
+# sysctl -w net.core.default_qdisc=fq
+```
