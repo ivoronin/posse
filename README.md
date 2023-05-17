@@ -15,13 +15,13 @@ This tool creates a TUN interface and writes incoming packets to a designated di
 ## Example
 
 ```
-host1# posse -disk /dev/sdb -rblk 0 -wblk 1 -addr 10.10.10.1/32 -peer 10.10.10.2/32
-host2# posse -disk /dev/sdb -rblk 1 -wblk 0 -addr 10.10.10.2/32 -peer 10.10.10.1/32
-host1# ping 10.10.10.2
-PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
-64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=136 ms
-64 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=140 ms
-64 bytes from 10.10.10.2: icmp_seq=3 ttl=64 time=145 ms
+host1# posse -disk /dev/sdb -rblk 0 -wblk 1 -addr 10.0.0.1/32 -peer 10.0.0.2/32
+host2# posse -disk /dev/sdb -rblk 1 -wblk 0 -addr 10.0.0.2/32 -peer 10.0.0.1/32
+host1# ping 10.0.0.2
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=136 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=140 ms
+64 bytes from 10.0.0.2: icmp_seq=3 ttl=64 time=145 ms
 ^C
 ```
 
