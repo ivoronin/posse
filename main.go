@@ -13,19 +13,25 @@ func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
 	for range rt.C {
 		block, err := disk.ReadBlock()
 		if err != nil {
+			stats.rdErr++
 			log.Printf("error reading from disk: %s", err)
 			continue
 		}
+		stats.rdBlk++
+
 		// block doesn't changed since last read, nothing to do
 		if block.ID == prevID {
 			continue
 		}
 
 		// skip first packet, because it can be the old one
-		if prevID == 0 {
-			prevID = block.ID
+		if stats.rdBlk == 1 {
 			continue
 		}
+		if stats.rdBlk == 2 {
+			log.Printf("received first block")
+		}
+
 		prevID = block.ID
 
 		err = block.Validate()
@@ -47,9 +53,11 @@ func diskTx(disk *Disk, wt *time.Ticker, txq <-chan []byte) {
 		block := NewBlockWithPayload(payload)
 		err := disk.WriteBlock(block)
 		if err != nil {
+			stats.wrErr++
 			log.Printf("error writing to disk: %s", err)
 			continue
 		}
+		stats.wrBlk++
 	}
 }
 
@@ -59,9 +67,11 @@ func tunRx(tun *TUN, txq chan<- []byte) {
 		buf := make([]byte, PayloadMaxSize)
 		_, err := tun.Read(buf)
 		if err != nil {
+			stats.rxErr++
 			log.Printf("error reading from tun: %s", err)
 			continue
 		}
+		stats.rxPkt++
 		txq <- buf
 	}
 }
@@ -71,9 +81,11 @@ func tunTx(tun *TUN, rxq <-chan []byte) {
 	for buf := range rxq {
 		_, err := tun.Write(buf)
 		if err != nil {
+			stats.txErr++
 			log.Printf("error writing to tun: %s", err)
 			continue
 		}
+		stats.txPkt++
 	}
 }
 
@@ -88,6 +100,7 @@ func main() {
 		txQLen     = kingpin.Flag("txqlen", "TX queue length").Envar("TXQLEN").Default("16").Uint()
 		rxQLen     = kingpin.Flag("rxqlen", "RX queue length").Envar("RXQLEN").Default("16").Uint()
 		hz         = kingpin.Flag("hz", "Disk polling and writing frequency in hz").Short('f').Envar("HZ").Default("10").Uint()
+		statsInt   = kingpin.Flag("stats", "Interval between periodic stats reports").Short('i').Envar("STATS").Default("60s").Duration()
 	)
 
 	kingpin.Parse()
@@ -119,6 +132,11 @@ func main() {
 	go diskTx(disk, wt, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
+
+	if *statsInt != 0 {
+		st := time.NewTicker(*statsInt)
+		go reportStats(st)
+	}
 
 	log.Printf("started up, running on %s", tun.Name())
 
