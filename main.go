@@ -92,7 +92,7 @@ func main() {
 
 	kingpin.Parse()
 
-	if rBlk == wBlk {
+	if *rBlk == *wBlk {
 		errx("rblk and wblk values can't be equal")
 	}
 
