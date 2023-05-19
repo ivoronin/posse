@@ -1,0 +1,18 @@
+services:
+  posse:
+    image: posse
+    build: .
+    container_name: posse
+    devices:
+      - /dev/net/tun
+      - /dev/sdb
+    environment:
+      DISK: /dev/sdb
+      ADDR: 10.0.0.1/32
+      PEER: 10.0.0.2/32
+      RBLK: 0
+      WBLK: 0
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped

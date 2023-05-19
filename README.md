@@ -15,8 +15,8 @@ This tool creates a TUN interface and writes incoming packets to a designated di
 ## Example
 
 ```
-host1# posse -disk /dev/sdb -wblk 0 -rblk 1 -addr 10.0.0.1/32 -peer 10.0.0.2/32
-host2# posse -disk /dev/sdb -wblk 1 -rblk 0 -addr 10.0.0.2/32 -peer 10.0.0.1/32
+host1# posse --disk /dev/sdb --wblk 0 --rblk 1 --addr 10.0.0.1/32 --peer 10.0.0.2/32
+host2# posse --disk /dev/sdb --wblk 1 --rblk 0 --addr 10.0.0.2/32 --peer 10.0.0.1/32
 host1# ping 10.0.0.2
 PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=136 ms
@@ -27,15 +27,15 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 
 ## Options
 
-- `disk` - Path to disk used for sending and receiving packets. It is important to exercise caution when using this disk, as any data on it may be overwritten. Required.
-- `tun` - Tunnel device name. Optional.
-- `addr` - Local IP address for tunnel. Must be equal to `peer` value on the remote host. Required.
-- `peer` - Remote IP address for tunnel. Must be equal to `addr` value on the remote host. Required.
-- `rblk` - Disk block number to read packets from. Must be equal to `wblk` value on the remote host. Required.
-- `wblk` - Disk block number to write packets to. Must be equal to `rblk` value on the remote host. Required.
-- `txqlen` - Transmit queue length. Optional. Defaults to 16.
-- `rxqlen` - Transmit queue length. Optional. Defaults to 16.
-- `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Optional. Defaults to 10.
+- `disk` - Path to disk used for sending and receiving packets. It is important to exercise caution when using this disk, as any data on it may be overwritten. Env var `DISK`. Required.
+- `tun` - Tunnel device name. Env var 'TUN'. Optional.
+- `addr` - Local IP address for tunnel. Must be equal to `peer` value on the remote host. Env var `ADDR`. Required.
+- `peer` - Remote IP address for tunnel. Must be equal to `addr` value on the remote host. Env var `PEER`. Required.
+- `rblk` - Disk block number to read packets from. Must be equal to `wblk` value on the remote host. Env var `RBLK`. Required.
+- `wblk` - Disk block number to write packets to. Must be equal to `rblk` value on the remote host. Env var `WBLK`. Required.
+- `txqlen` - Transmit queue length. Env var `TXQLEN`. Optional. Defaults to 16.
+- `rxqlen` - Transmit queue length. Env var `RXQLEN`. Optional. Defaults to 16.
+- `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Env var `HZ`. Optional. Defaults to 10.
 
 ## Performance
 The bandwidth is effectively limited by the frequency of transfers, which is set to 10 per second by default (see the `hz` flag). This value can be safely increased to 100 on most systems. The maximum feasible value for your configuration can be calculated by dividing 1000 by your shared disk response time in milliseconds. For example, if your disk has a response time of 5 ms, the `hz` flag can be set to 200.
@@ -45,3 +45,6 @@ It is also recommended to change the TCP congestion control algorithm to BBR on 
 # sysctl -w net.ipv4.tcp_congestion_control=bbr
 # sysctl -w net.core.default_qdisc=fq
 ```
+
+## Docker support
+Posse can be run in a containerized environment. For more information, please refer to the included Dockerfile and docker-compose.yml files.

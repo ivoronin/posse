@@ -1,9 +1,10 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"time"
+
+	"github.com/alecthomas/kingpin/v2"
 )
 
 // reads packets from disk and puts them into rx queue
@@ -77,25 +78,19 @@ func tunTx(tun *TUN, rxq <-chan []byte) {
 }
 
 func main() {
-	diskPath := flag.String("disk", "", "disk path")
-	tunName := flag.String("tun", "", "tun name")
-	localAddr := flag.String("addr", "", "local address")
-	remoteAddr := flag.String("peer", "", "remote address")
-	rBlk := flag.Uint64("rblk", 0, "disk block to read packets from")
-	wBlk := flag.Uint64("wblk", 0, "disk block to write packets to")
-	txQLen := flag.Uint("txqlen", 16, "tx queue length")
-	rxQLen := flag.Uint("rxqlen", 16, "rx queue length")
-	hz := flag.Uint("hz", 10, "polling and writing frequency in hz")
-	flag.Parse()
+	var (
+		diskPath   = kingpin.Flag("disk", "Disk path").Short('d').Envar("DISK").Required().String()
+		tunName    = kingpin.Flag("tun", "Tun name").Short('t').Envar("TUN").String()
+		localAddr  = kingpin.Flag("addr", "Local address").Short('a').Envar("ADDR").Required().String()
+		remoteAddr = kingpin.Flag("peer", "Peer address").Short('p').Envar("PEER").Required().String()
+		rBlk       = kingpin.Flag("rblk", "Disk block to read packets from").Short('r').Envar("RBLK").Required().Uint64()
+		wBlk       = kingpin.Flag("wblk", "Disk block to write packets to").Short('w').Envar("WBLK").Required().Uint64()
+		txQLen     = kingpin.Flag("txqlen", "TX queue length").Envar("TXQLEN").Default("16").Uint()
+		rxQLen     = kingpin.Flag("rxqlen", "RX queue length").Envar("RXQLEN").Default("16").Uint()
+		hz         = kingpin.Flag("hz", "Disk polling and writing frequency in hz").Short('f').Envar("HZ").Default("10").Uint()
+	)
 
-	mandatoryFlags := []string{"disk", "addr", "peer", "rblk", "wblk"}
-	seenFlags := make(map[string]bool)
-	flag.Visit(func(f *flag.Flag) { seenFlags[f.Name] = true })
-	for _, flagName := range mandatoryFlags {
-		if !seenFlags[flagName] {
-			errx("%s must be set", flagName)
-		}
-	}
+	kingpin.Parse()
 
 	if rBlk == wBlk {
 		errx("rblk and wblk values can't be equal")
