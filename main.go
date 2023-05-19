@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -8,49 +9,75 @@ import (
 )
 
 // reads packets from disk and puts them into rx queue
-func diskRx(disk *Disk, rt *time.Ticker, rxq chan<- []byte) {
-	var prevID uint32 = 0
+func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
+	var prevID uint32
+	var numStaleReads uint64
+	var bve *BlockValidationError
+
+	peerStatus.Log()
+
 	for range rt.C {
 		block, err := disk.ReadBlock()
 		if err != nil {
 			stats.rdErr++
-			log.Printf("error reading from disk: %s", err)
+			// ReadBlock can return BlockValidationError because peer had not yet written
+			// anything to it's wblk and it is containing some garbage at the moment.
+			// Such errors must be silenced.
+			if !(peerStatus == Init && errors.As(err, &bve)) {
+				log.Printf("error reading from disk: %s", err)
+			}
 			continue
 		}
 		stats.rdBlk++
 
-		// block doesn't changed since last read, nothing to do
+		// Skip first packet, because it can be the old one
+		if prevID == 0 {
+			prevID = block.ID
+			continue
+		}
+
+		// Block didn't changed since last read
 		if block.ID == prevID {
+			numStaleReads++
+			if peerStatus == Up && numStaleReads >= maxStale {
+				peerStatus = Down
+				peerStatus.Log()
+			}
 			continue
 		}
 
-		// skip first packet, because it can be the old one
-		if stats.rdBlk == 1 {
-			continue
-		}
-		if stats.rdBlk == 2 {
-			log.Printf("received first block")
-		}
-
+		numStaleReads = 0
 		prevID = block.ID
 
-		err = block.Validate()
-		if err != nil {
-			log.Printf("block validation error: %s", err)
-			continue
+		if peerStatus != Up {
+			peerStatus = Up
+			peerStatus.Log()
 		}
-		rxq <- block.Payload
+
+		if !block.IsKeepalive() {
+			rxq <- block.Payload
+		}
 	}
 }
 
 // reads packets from tx queue and writes them to disk device
-func diskTx(disk *Disk, wt *time.Ticker, txq <-chan []byte) {
+func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
+	var missedWrites uint64
 	for range wt.C {
+		var block *Block
 		if len(txq) == 0 {
-			continue
+			missedWrites++
+			if missedWrites*2 < maxStale {
+				continue
+			}
+			block = NewBlock(nil, keepalive)
+		} else {
+			payload := <-txq
+			block = NewBlock(payload, 0)
 		}
-		payload := <-txq
-		block := NewBlockWithPayload(payload)
+
+		missedWrites = 0
+
 		err := disk.WriteBlock(block)
 		if err != nil {
 			stats.wrErr++
@@ -101,6 +128,7 @@ func main() {
 		rxQLen     = kingpin.Flag("rxqlen", "RX queue length").Envar("RXQLEN").Default("16").Uint()
 		hz         = kingpin.Flag("hz", "Disk polling and writing frequency in hz").Short('f').Envar("HZ").Default("10").Uint()
 		statsInt   = kingpin.Flag("stats", "Interval between periodic stats reports").Short('i').Envar("STATS").Default("60s").Duration()
+		maxStale   = kingpin.Flag("maxstale", "Number of stale reads before declaring peer dead").Envar("MAXSTALE").Default("5").Uint64()
 	)
 
 	kingpin.Parse()
@@ -128,8 +156,8 @@ func main() {
 	rt := time.NewTicker(tickDuration)
 	wt := time.NewTicker(tickDuration)
 
-	go diskRx(disk, rt, rxq)
-	go diskTx(disk, wt, txq)
+	go diskRx(disk, rt, *maxStale, rxq)
+	go diskTx(disk, wt, *maxStale, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
 

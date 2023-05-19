@@ -35,7 +35,10 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 		return nil, err
 	}
 
-	block := NewBlockFromBytes(buf)
+	block, err := NewBlockFromBytes(buf)
+	if err != nil {
+		return nil, err
+	}
 
 	return block, nil
 }

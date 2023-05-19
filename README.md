@@ -37,6 +37,7 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 - `rxqlen` - Transmit queue length. Env var `RXQLEN`. Optional. Defaults to 16.
 - `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Env var `HZ`. Optional. Defaults to 10.
 - `stat` - Interval between periodic stats reports. Env var `STATS`. Optional. Defaults to '60s'. Set to 0 to disable reports.
+- `maxstale` - Number of stale reads before declaring peer dead. Env var `MAXSTALE`. Optional. Defaults to 5.
 
 ## Performance
 The bandwidth is effectively limited by the frequency of transfers, which is set to 10 per second by default (see the `hz` flag). This value can be safely increased to 100 on most systems. The maximum feasible value for your configuration can be calculated by dividing 1000 by your shared disk response time in milliseconds. For example, if your disk has a response time of 5 ms, the `hz` flag can be set to 200.

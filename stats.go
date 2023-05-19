@@ -24,11 +24,12 @@ func reportStats(st *time.Ticker) {
 
 	for currTime := range st.C {
 		sec := currTime.Sub(prevTime).Seconds()
-		log.Printf(""+
+		log.Printf("status:%s "+
 			"rdBlk:%d rdErr:%d rdBlk/s:%.2f "+
 			"wrBlk:%d wrErr:%d wrBlk/s:%.2f "+
 			"rxPkt:%d rxErr:%d rxPkt/s:%.2f "+
 			"txPkt:%d txErr:%d txPkt/s:%.2f",
+			peerStatus,
 			stats.rdBlk-prevStats.rdBlk,
 			stats.rdErr-prevStats.rdErr,
 			float64(stats.rdBlk-prevStats.rdBlk)/sec,
