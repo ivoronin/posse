@@ -115,7 +115,7 @@ func (block *Block) ToBytes() []byte {
 	binary.BigEndian.PutUint32(buf[idOffset:], block.ID)
 	buf[typeOffset] = uint8(block.Type)
 	binary.BigEndian.PutUint16(buf[lenOffset:], uint16(len(block.Payload)))
-	copy(buf[payloadOffset:PayloadMaxSize], block.Payload)
+	copy(buf[payloadOffset:payloadOffset+PayloadMaxSize], block.Payload)
 	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
 	binary.BigEndian.PutUint32(buf[crcOffset:], crc)
 
