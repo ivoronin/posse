@@ -43,7 +43,7 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 		// Block didn't changed since last read
 		if block.ID == prevID {
 			numStaleReads++
-			if peerStatus == Up && numStaleReads >= maxStale {
+			if peerStatus != Down && numStaleReads >= maxStale {
 				peerStatus = Down
 				peerStatus.Log()
 			}
