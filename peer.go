@@ -8,12 +8,13 @@ const (
 	Init PeerStatus = iota
 	Down
 	Up
+	Unknown
 )
 
 var peerStatus PeerStatus
 
 func (p PeerStatus) String() string {
-	status := []string{"init", "down", "up"}
+	status := []string{"init", "down", "up", "unknown"}
 	return status[p]
 }
 

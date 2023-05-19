@@ -22,8 +22,13 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 			// ReadBlock can return ErrBlock because peer had not yet written
 			// anything to it's wblk and it is containing some garbage at the moment.
 			// Such errors must be silenced.
-			if !(peerStatus == Init && errors.Is(err, ErrBlock)) {
-				log.Printf("error reading from disk: %s", err)
+			if peerStatus == Init && errors.Is(err, ErrBlock) {
+				continue
+			}
+			log.Printf("error reading from disk: %s", err)
+			if peerStatus != Unknown {
+				peerStatus = Unknown
+				peerStatus.Log()
 			}
 			continue
 		}
