@@ -12,7 +12,6 @@ import (
 func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 	var prevID uint32
 	var numStaleReads uint64
-	var bve *BlockValidationError
 
 	peerStatus.Log()
 
@@ -20,10 +19,10 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 		block, err := disk.ReadBlock()
 		if err != nil {
 			stats.rdErr++
-			// ReadBlock can return BlockValidationError because peer had not yet written
+			// ReadBlock can return ErrBlock because peer had not yet written
 			// anything to it's wblk and it is containing some garbage at the moment.
 			// Such errors must be silenced.
-			if !(peerStatus == Init && errors.As(err, &bve)) {
+			if !(peerStatus == Init && errors.Is(err, ErrBlock)) {
 				log.Printf("error reading from disk: %s", err)
 			}
 			continue
@@ -54,7 +53,7 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 			peerStatus.Log()
 		}
 
-		if !block.IsKeepalive() {
+		if block.Type == Data {
 			rxq <- block.Payload
 		}
 	}
@@ -70,10 +69,10 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 			if missedWrites*2 < maxStale {
 				continue
 			}
-			block = NewBlock(nil, keepalive)
+			block = NewBlock(nil, Keepalive)
 		} else {
 			payload := <-txq
-			block = NewBlock(payload, 0)
+			block = NewBlock(payload, Data)
 		}
 
 		missedWrites = 0

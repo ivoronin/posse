@@ -2,50 +2,51 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"math/rand"
 	"unsafe"
 )
 
-type blockFlags uint8
+type BlockType uint8
 
 const (
-	keepalive blockFlags = 1 << iota
+	Data BlockType = iota
+	Keepalive
 )
 
 type Block struct {
-	version uint8
-	flags   blockFlags
-	len     uint16
+	Type    BlockType
 	ID      uint32
-	crc     uint32
 	Payload []byte
 }
 
-const blockVersion = 2
+/*
+* On-disk format:
+* off	type		desc
+* 0 	uint8 		magic
+* 1 	uint32 		block ID
+* 5 	uint8 		type
+* 1 	uint16 		payload length
+* 8		[500]byte 	payload data
+* 508 	uint32 		crc
+ */
+
+const blockMagic = uint8(42)
+
 const BlockSize = 512
+const PayloadMaxSize = 500
 
-const lenOffset = 2
-const idOffset = 4
-const crcOffset = 8
-const payloadOffset = 12
+const (
+	idOffset      = 1
+	typeOffset    = 5
+	lenOffset     = 6
+	payloadOffset = 8
+	crcOffset     = 508
+)
 
-const PayloadMaxSize = BlockSize - payloadOffset
-
-type BlockValidationError struct {
-	msg string
-}
-
-func NewBlockValidationError(fmts string, args ...interface{}) *BlockValidationError {
-	e := new(BlockValidationError)
-	e.msg = fmt.Sprintf(fmts, args...)
-	return e
-}
-
-func (e *BlockValidationError) Error() string {
-	return e.msg
-}
+var ErrBlock = errors.New("block validation error")
 
 func alignedByteSlice(size uint, align uint) []byte {
 	bytes := make([]byte, size+align)
@@ -64,39 +65,45 @@ func NewBlockFromBytes(buf []byte) (*Block, error) {
 	}
 
 	block := new(Block)
-	block.version = buf[0]
-	block.flags = blockFlags(buf[1])
-	block.len = binary.BigEndian.Uint16(buf[lenOffset:])
+	blockCrc := binary.BigEndian.Uint32(buf[crcOffset:])
+	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
+
+	if blockCrc != crc {
+		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong crc")
+	}
+
+	magic := buf[0]
+	if magic != blockMagic {
+		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong magic")
+	}
+
 	block.ID = binary.BigEndian.Uint32(buf[idOffset:])
-	block.crc = binary.BigEndian.Uint32(buf[crcOffset:])
 
-	if block.version != blockVersion {
-		return nil, NewBlockValidationError("block version is not supported: %d", block.version)
-	}
-	if block.len > PayloadMaxSize {
-		return nil, NewBlockValidationError("payload size is too big: %d", block.len)
+	block.Type = BlockType(buf[typeOffset])
+	if (block.Type != Data) && (block.Type != Keepalive) {
+		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong type")
 	}
 
-	block.Payload = buf[payloadOffset : payloadOffset+block.len]
-
-	if block.crc != crc32.ChecksumIEEE(block.Payload) {
-		return nil, NewBlockValidationError("block has wrong payload crc")
+	pLen := binary.BigEndian.Uint16(buf[lenOffset:])
+	if pLen > PayloadMaxSize {
+		return nil, fmt.Errorf("%w: %s", ErrBlock, "payload length too big")
 	}
+
+	block.Payload = make([]byte, pLen)
+	copy(block.Payload, buf[payloadOffset:payloadOffset+pLen])
 
 	return block, nil
 }
 
-func NewBlock(payload []byte, flags blockFlags) *Block {
-	if len(payload) > PayloadMaxSize {
+func NewBlock(payload []byte, typ BlockType) *Block {
+	pLen := len(payload)
+	if pLen > PayloadMaxSize {
 		panicf("payload size is too big: %d", len(payload))
 	}
 	block := new(Block)
-	block.version = blockVersion
-	block.flags = flags
-	block.len = uint16(len(payload))
+	block.Type = typ
 	block.ID = rand.Uint32()
-	block.crc = crc32.ChecksumIEEE(payload)
-	block.Payload = make([]byte, PayloadMaxSize)
+	block.Payload = make([]byte, pLen)
 	copy(block.Payload, payload)
 
 	return block
@@ -104,15 +111,13 @@ func NewBlock(payload []byte, flags blockFlags) *Block {
 
 func (block *Block) ToBytes() []byte {
 	buf := alignedByteSlice(BlockSize, BlockSize)
-	buf[0] = block.version
-	buf[1] = uint8(block.flags)
-	binary.BigEndian.PutUint16(buf[lenOffset:], block.len)
+	buf[0] = blockMagic
 	binary.BigEndian.PutUint32(buf[idOffset:], block.ID)
-	binary.BigEndian.PutUint32(buf[crcOffset:], block.crc)
-	copy(buf[payloadOffset:], block.Payload)
-	return buf
-}
+	buf[typeOffset] = uint8(block.Type)
+	binary.BigEndian.PutUint16(buf[lenOffset:], uint16(len(block.Payload)))
+	copy(buf[payloadOffset:PayloadMaxSize], block.Payload)
+	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
+	binary.BigEndian.PutUint32(buf[crcOffset:], crc)
 
-func (block *Block) IsKeepalive() bool {
-	return block.flags&keepalive != 0
+	return buf
 }
