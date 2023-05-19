@@ -120,6 +120,8 @@ func main() {
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
 
+	log.Printf("started up, running on %s", tun.Name())
+
 	// block
 	select {}
 }
