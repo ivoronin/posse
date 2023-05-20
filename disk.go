@@ -32,14 +32,17 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 
 	_, err := disk.file.ReadAt(buf, disk.rOff)
 	if err != nil {
+		stats.rdErr++
 		return nil, err
 	}
 
 	block, err := NewBlockFromBytes(buf)
 	if err != nil {
+		stats.rdErr++
 		return nil, err
 	}
 
+	stats.rdBlk++
 	return block, nil
 }
 
@@ -47,8 +50,10 @@ func (disk *Disk) WriteBlock(block *Block) error {
 	buf := block.ToBytes()
 	_, err := disk.file.WriteAt(buf, disk.wOff)
 	if err != nil {
+		stats.wrErr++
 		return err
 	}
 
+	stats.wrBlk++
 	return nil
 }

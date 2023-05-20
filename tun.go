@@ -9,7 +9,7 @@ import (
 )
 
 type TUN struct {
-	water.Interface
+	iface water.Interface
 }
 
 func NewTUN(tunName string, mtu int, localAddr string, remoteAddr string) (*TUN, error) {
@@ -59,5 +59,29 @@ func NewTUN(tunName string, mtu int, localAddr string, remoteAddr string) (*TUN,
 		return nil, fmt.Errorf("error setting link up: %s", err)
 	}
 
-	return &TUN{Interface: *iface}, nil
+	return &TUN{iface: *iface}, nil
+}
+
+func (t *TUN) Read(buf []byte) (int, error) {
+	n, err := t.iface.Read(buf)
+	if err != nil {
+		stats.rxErr++
+		return n, err
+	}
+	stats.rxPkt++
+	return n, err
+}
+
+func (t *TUN) Write(buf []byte) (int, error) {
+	n, err := t.iface.Write(buf)
+	if err != nil {
+		stats.txErr++
+		return n, err
+	}
+	stats.txPkt++
+	return n, err
+}
+
+func (t *TUN) Name() string {
+	return t.iface.Name()
 }

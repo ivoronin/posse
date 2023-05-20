@@ -18,7 +18,6 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 	for range rt.C {
 		block, err := disk.ReadBlock()
 		if err != nil {
-			stats.rdErr++
 			// ReadBlock can return ErrBlock because peer had not yet written
 			// anything to it's wblk and it is containing some garbage at the moment.
 			// Such errors must be silenced.
@@ -32,7 +31,6 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 			}
 			continue
 		}
-		stats.rdBlk++
 
 		// Skip first packet, because it can be the old one
 		if prevID == 0 {
@@ -84,11 +82,9 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 
 		err := disk.WriteBlock(block)
 		if err != nil {
-			stats.wrErr++
 			log.Printf("error writing to disk: %s", err)
 			continue
 		}
-		stats.wrBlk++
 	}
 }
 
@@ -98,11 +94,9 @@ func tunRx(tun *TUN, txq chan<- []byte) {
 		buf := make([]byte, PayloadMaxSize)
 		_, err := tun.Read(buf)
 		if err != nil {
-			stats.rxErr++
 			log.Printf("error reading from tun: %s", err)
 			continue
 		}
-		stats.rxPkt++
 		txq <- buf
 	}
 }
@@ -112,11 +106,9 @@ func tunTx(tun *TUN, rxq <-chan []byte) {
 	for buf := range rxq {
 		_, err := tun.Write(buf)
 		if err != nil {
-			stats.txErr++
 			log.Printf("error writing to tun: %s", err)
 			continue
 		}
-		stats.txPkt++
 	}
 }
 
