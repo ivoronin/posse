@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"syscall"
 )
@@ -10,6 +12,8 @@ type Disk struct {
 	rOff int64
 	wOff int64
 }
+
+var ErrBlock = errors.New("block error")
 
 func NewDisk(diskPath string, rOff uint64, wOff uint64) (*Disk, error) {
 	var err error
@@ -39,7 +43,7 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 	block, err := NewBlockFromBytes(buf)
 	if err != nil {
 		stats.rdErr++
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", ErrBlock, err)
 	}
 
 	stats.rdBlk++

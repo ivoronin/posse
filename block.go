@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"math/rand"
@@ -46,8 +45,6 @@ const (
 	crcOffset     = 508
 )
 
-var ErrBlock = errors.New("block validation error")
-
 func alignedByteSlice(size uint, align uint) []byte {
 	bytes := make([]byte, size+align)
 	if align == 0 {
@@ -69,24 +66,24 @@ func NewBlockFromBytes(buf []byte) (*Block, error) {
 	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
 
 	if blockCrc != crc {
-		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong crc")
+		return nil, fmt.Errorf("wrong crc")
 	}
 
 	magic := buf[0]
 	if magic != blockMagic {
-		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong magic")
+		return nil, fmt.Errorf("wrong magic")
 	}
 
 	block.ID = binary.BigEndian.Uint32(buf[idOffset:])
 
 	block.Type = BlockType(buf[typeOffset])
 	if (block.Type != Data) && (block.Type != Keepalive) {
-		return nil, fmt.Errorf("%w: %s", ErrBlock, "wrong type")
+		return nil, fmt.Errorf("wrong type")
 	}
 
 	pLen := binary.BigEndian.Uint16(buf[lenOffset:])
 	if pLen > PayloadMaxSize {
-		return nil, fmt.Errorf("%w: %s", ErrBlock, "payload length too big")
+		return nil, fmt.Errorf("payload length too big")
 	}
 
 	block.Payload = make([]byte, pLen)
