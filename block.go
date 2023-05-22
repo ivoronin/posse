@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
-	"math/rand"
 	"unsafe"
 )
 
@@ -92,14 +91,14 @@ func NewBlockFromBytes(buf []byte) (*Block, error) {
 	return block, nil
 }
 
-func NewBlock(payload []byte, typ BlockType) *Block {
+func NewBlock(payload []byte, id uint32, typ BlockType) *Block {
 	pLen := len(payload)
 	if pLen > PayloadMaxSize {
 		panicf("payload size is too big: %d", len(payload))
 	}
 	block := new(Block)
 	block.Type = typ
-	block.ID = rand.Uint32()
+	block.ID = id
 	block.Payload = make([]byte, pLen)
 	copy(block.Payload, payload)
 

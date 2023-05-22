@@ -41,11 +41,16 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 		// Block didn't changed since last read
 		if block.ID == prevID {
 			numStaleReads++
+			stats.rdStale++
 			if peerStatus != Down && numStaleReads >= maxStale {
 				peerStatus = Down
 				peerStatus.Log()
 			}
 			continue
+		}
+
+		if peerStatus == Up && block.ID-prevID > 1 {
+			stats.rdMiss++
 		}
 
 		numStaleReads = 0
@@ -57,7 +62,10 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 		}
 
 		if block.Type == Data {
+			stats.rdData++
 			rxq <- block.Payload
+		} else if block.Type == Keepalive {
+			stats.rdKeep++
 		}
 	}
 }
@@ -65,6 +73,7 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 // reads packets from tx queue and writes them to disk device
 func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 	var missedWrites uint64
+	var blkSeq uint32
 	for range wt.C {
 		var block *Block
 		if len(txq) == 0 {
@@ -72,10 +81,12 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 			if missedWrites*2 < maxStale {
 				continue
 			}
-			block = NewBlock(nil, Keepalive)
+			block = NewBlock(nil, blkSeq, Keepalive)
+			stats.wrKeep++
 		} else {
 			payload := <-txq
-			block = NewBlock(payload, Data)
+			block = NewBlock(payload, blkSeq, Data)
+			stats.wrData++
 		}
 
 		missedWrites = 0
@@ -85,6 +96,7 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 			log.Printf("error writing to disk: %s", err)
 			continue
 		}
+		blkSeq++
 	}
 }
 
