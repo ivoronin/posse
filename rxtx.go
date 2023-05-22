@@ -58,29 +58,29 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 	var missedWrites uint64
 	var blkSeq uint32
 	var wrBlkStat *uint64
+
 	for range wt.C {
 		var block *Block
+
 		if len(txq) == 0 {
 			missedWrites++
-			if missedWrites*2 < maxStale {
+			if missedWrites < (maxStale - 1) {
 				continue
 			}
 			block = NewBlock(nil, blkSeq, Keepalive)
 			wrBlkStat = &stats.wrBlkKeep
-
 		} else {
 			payload := <-txq
 			block = NewBlock(payload, blkSeq, Data)
 			wrBlkStat = &stats.wrBlkData
 		}
 
-		missedWrites = 0
-
 		err := disk.WriteBlock(block)
 		if err != nil {
 			log.Printf("error writing to disk: %s", err)
 			continue
 		}
+		missedWrites = 0
 		*wrBlkStat++
 		blkSeq++
 	}
