@@ -41,7 +41,7 @@ func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 		peer.Event(PeerEventBlockReadNew)
 
 		if block.ID-prevID > 1 {
-			stats.rdBlkMiss++
+			stats.rdBlkMiss += uint64(block.ID - prevID - 1)
 		}
 
 		prevID = block.ID
