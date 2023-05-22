@@ -4,10 +4,12 @@ import (
 	"errors"
 	"log"
 	"time"
+
+	"github.com/ivoronin/posse/fsm"
 )
 
 // reads packets from disk and puts them into rx queue
-func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
+func diskRx(disk *Disk, rt *time.Ticker, fsm *fsm.FSM, rxq chan<- []byte) {
 	var prevID uint32
 
 	for range rt.C {
@@ -16,11 +18,11 @@ func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 			// ReadBlock can return ErrBlock because peer had not yet written
 			// anything to it's wblk and it is containing some garbage at the moment.
 			// Such errors must be silenced.
-			if peer.State() == PeerStateInit && errors.Is(err, ErrBlock) {
+			if fsm.CurrentState == PeerRxStateInit && errors.Is(err, ErrBlock) {
 				continue
 			}
 			log.Printf("error reading from disk: %s", err)
-			peer.Event(PeerEventBlockReadErr)
+			fsm.Event(PeerRxEventBlockReadErr)
 			continue
 		}
 
@@ -32,11 +34,11 @@ func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 
 		// Block didn't changed since last read
 		if block.ID == prevID {
-			peer.Event(PeerEventBlockReadStale)
+			fsm.Event(PeerRxEventBlockReadStale)
 			stats.rdBlkStale++
 			continue
 		}
-		peer.Event(PeerEventBlockReadNew)
+		fsm.Event(PeerRxEventBlockReadNew)
 
 		if block.ID-prevID > 1 {
 			stats.rdBlkMiss += uint64(block.ID - prevID - 1)
@@ -54,8 +56,7 @@ func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 }
 
 // reads packets from tx queue and writes them to disk device
-func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
-	var missedWrites uint64
+func diskTx(disk *Disk, wt *time.Ticker, fsm *fsm.FSM, txq <-chan []byte) {
 	var blkSeq uint32
 	var wrBlkStat *uint64
 
@@ -63,8 +64,8 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 		var block *Block
 
 		if len(txq) == 0 {
-			missedWrites++
-			if missedWrites < (maxStale - 1) {
+			fsm.Event(PeerTxEventBlockSkipped)
+			if fsm.CurrentState != PeerTxStateDowntime {
 				continue
 			}
 			block = NewBlock(nil, blkSeq, Keepalive)
@@ -78,9 +79,10 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 		err := disk.WriteBlock(block)
 		if err != nil {
 			log.Printf("error writing to disk: %s", err)
+			fsm.Event(PeerTxEventBlockWriteErr)
 			continue
 		}
-		missedWrites = 0
+		fsm.Event(PeerTxEventBlockWritten)
 		*wrBlkStat++
 		blkSeq++
 	}

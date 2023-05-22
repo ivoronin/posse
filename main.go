@@ -49,8 +49,8 @@ func main() {
 
 	peer := NewPeer(*maxStale)
 
-	go diskRx(disk, rt, peer, rxq)
-	go diskTx(disk, wt, *maxStale, txq)
+	go diskRx(disk, rt, peer.RxFSM, rxq)
+	go diskTx(disk, wt, peer.TxFSM, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
 

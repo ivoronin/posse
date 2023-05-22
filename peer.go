@@ -7,61 +7,86 @@ import (
 )
 
 var (
-	PeerStateInit    fsm.State = "init"
-	PeerStateDown    fsm.State = "down"
-	PeerStateUp      fsm.State = "up"
-	PeerStateUnknown fsm.State = "unknown"
+	PeerRxStateInit  fsm.State = "init"
+	PeerRxStateDown  fsm.State = "down"
+	PeerRxStateUp    fsm.State = "up"
+	PeerRxStateError fsm.State = "error"
+
+	PeerTxStateUp       fsm.State = "up"
+	PeerTxStateDowntime fsm.State = "downtime"
+	PeerTxStateError    fsm.State = "error"
 )
 
 var (
-	PeerEventBlockReadErr   fsm.Event = "BlockReadErr"
-	PeerEventBlockReadStale fsm.Event = "BlockReadStale"
-	PeerEventBlockReadNew   fsm.Event = "BlockReadNew"
+	PeerRxEventBlockReadErr   fsm.Event = "BlockReadErr"
+	PeerRxEventBlockReadStale fsm.Event = "BlockReadStale"
+	PeerRxEventBlockReadNew   fsm.Event = "BlockReadNew"
+
+	PeerTxEventBlockWritten  fsm.Event = "BlockWritten"
+	PeerTxEventBlockWriteErr fsm.Event = "BlockWriteErr"
+	PeerTxEventBlockSkipped  fsm.Event = "BlockSkipped"
 )
 
 type Peer struct {
-	fsm *fsm.FSM
+	RxFSM *fsm.FSM
+	TxFSM *fsm.FSM
 }
 
-func peerStateChanged(from fsm.State, to fsm.State, evt fsm.Event) {
+func peerRxStateChanged(from fsm.State, to fsm.State, evt fsm.Event) {
 	if from == to {
 		return
 	}
-	log.Printf("peer status: %s -> %s", from, to)
+	log.Printf("peer rx status: %s -> %s", from, to)
 }
 
 func NewPeer(maxStale uint64) *Peer {
 	peer := new(Peer)
-	AnyState := []fsm.State{PeerStateInit, PeerStateDown, PeerStateUp, PeerStateUnknown}
-	peer.fsm = fsm.NewFSM(
-		PeerStateInit,
+	AllRxStates := []fsm.State{PeerRxStateInit, PeerRxStateDown, PeerRxStateUp, PeerRxStateError}
+	peer.RxFSM = fsm.NewFSM(
+		PeerRxStateInit,
 		[]fsm.Transition{
 			{
-				Evt: PeerEventBlockReadErr,
-				Src: AnyState,
-				Dst: PeerStateUnknown,
+				Evt: PeerRxEventBlockReadErr,
+				Src: AllRxStates,
+				Dst: PeerRxStateError,
 			},
 			{
-				Evt:      PeerEventBlockReadStale,
-				Src:      AnyState,
-				Dst:      PeerStateDown,
+				Evt:      PeerRxEventBlockReadStale,
+				Src:      AllRxStates,
+				Dst:      PeerRxStateDown,
 				MinTimes: uint(maxStale),
 			},
 			{
-				Evt: PeerEventBlockReadNew,
-				Src: AnyState,
-				Dst: PeerStateUp,
+				Evt: PeerRxEventBlockReadNew,
+				Src: AllRxStates,
+				Dst: PeerRxStateUp,
 			},
 		},
-		peerStateChanged,
+		peerRxStateChanged,
+	)
+
+	AllTxStates := []fsm.State{PeerTxStateUp, PeerTxStateDowntime, PeerTxStateError}
+	peer.TxFSM = fsm.NewFSM(
+		PeerTxStateUp,
+		[]fsm.Transition{
+			{
+				Evt: PeerTxEventBlockWritten,
+				Src: AllTxStates,
+				Dst: PeerTxStateUp,
+			},
+			{
+				Evt:      PeerTxEventBlockSkipped,
+				Src:      AllTxStates,
+				Dst:      PeerTxStateDowntime,
+				MinTimes: uint(maxStale - 1),
+			},
+			{
+				Evt: PeerTxEventBlockWriteErr,
+				Src: AllTxStates,
+				Dst: PeerTxStateError,
+			},
+		},
+		nil,
 	)
 	return peer
-}
-
-func (p *Peer) State() fsm.State {
-	return p.fsm.CurrentState
-}
-
-func (p *Peer) Event(evt fsm.Event) {
-	p.fsm.Event(evt)
 }

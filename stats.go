@@ -31,14 +31,14 @@ func reportStats(st *time.Ticker, peer *Peer) {
 
 	for currTime := range st.C {
 		sec := currTime.Sub(prevTime).Seconds()
-		log.Printf("stats: peer:%s "+
+		log.Printf("stats: rx:%s tx:%s "+
 			"rdBlk:%d rdBlkErr:%d rdBlkMiss:%d rdBlkStale:%d rdBlkData:%d rdBlkKeep:%d "+
 			"rdErr:%d rdBlk/s:%.2f "+
 			"wrBlk:%d wrBlkData:%d wrBlkKeep:%d "+
 			"wrErr:%d wrBlk/s:%.2f "+
 			"rxPkt:%d rxErr:%d rxPkt/s:%.2f "+
 			"txPkt:%d txErr:%d txPkt/s:%.2f",
-			peer.State(),
+			peer.RxFSM.CurrentState, peer.TxFSM.CurrentState,
 			stats.rdBlk-prevStats.rdBlk,
 			stats.rdBlkErr-prevStats.rdBlkErr,
 			stats.rdBlkMiss-prevStats.rdBlkMiss,
