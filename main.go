@@ -35,22 +35,22 @@ func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 		// Block didn't changed since last read
 		if block.ID == prevID {
 			peer.Event(PeerEventBlockReadStale)
-			stats.rdStale++
+			stats.rdBlkStale++
 			continue
 		}
 		peer.Event(PeerEventBlockReadNew)
 
 		if block.ID-prevID > 1 {
-			stats.rdMiss++
+			stats.rdBlkMiss++
 		}
 
 		prevID = block.ID
 
 		if block.Type == Data {
-			stats.rdData++
+			stats.rdBlkData++
 			rxq <- block.Payload
 		} else if block.Type == Keepalive {
-			stats.rdKeep++
+			stats.rdBlkKeep++
 		}
 	}
 }
@@ -67,11 +67,11 @@ func diskTx(disk *Disk, wt *time.Ticker, maxStale uint64, txq <-chan []byte) {
 				continue
 			}
 			block = NewBlock(nil, blkSeq, Keepalive)
-			stats.wrKeep++
+			stats.wrBlkKeep++
 		} else {
 			payload := <-txq
 			block = NewBlock(payload, blkSeq, Data)
-			stats.wrData++
+			stats.wrBlkData++
 		}
 
 		missedWrites = 0

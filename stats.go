@@ -6,20 +6,20 @@ import (
 )
 
 type Stats struct {
-	rdBlk   uint64
-	rdMiss  uint64
-	rdStale uint64
-	rdData  uint64
-	rdKeep  uint64
-	rdErr   uint64
-	wrBlk   uint64
-	wrData  uint64
-	wrKeep  uint64
-	wrErr   uint64
-	rxPkt   uint64
-	rxErr   uint64
-	txPkt   uint64
-	txErr   uint64
+	rdBlk      uint64
+	rdBlkMiss  uint64
+	rdBlkStale uint64
+	rdBlkData  uint64
+	rdBlkKeep  uint64
+	rdErr      uint64
+	wrBlk      uint64
+	wrBlkData  uint64
+	wrBlkKeep  uint64
+	wrErr      uint64
+	rxPkt      uint64
+	rxErr      uint64
+	txPkt      uint64
+	txErr      uint64
 }
 
 var stats Stats
@@ -31,23 +31,23 @@ func reportStats(st *time.Ticker, peer *Peer) {
 	for currTime := range st.C {
 		sec := currTime.Sub(prevTime).Seconds()
 		log.Printf("stats: peer:%s "+
-			"rdBlk:%d rdMiss:%d rdStale:%d "+
-			"rdData:%d rdKeep:%d rdErr:%d rdBlk/s:%.2f "+
-			"wrBlk:%d wrData:%d wrKeep:%d "+
+			"rdBlk:%d rdBlkMiss:%d rdBlkStale:%d rdBlkData:%d rdBlkKeep:%d "+
+			"rdErr:%d rdBlk/s:%.2f "+
+			"wrBlk:%d wrBlkData:%d wrBlkKeep:%d "+
 			"wrErr:%d wrBlk/s:%.2f "+
 			"rxPkt:%d rxErr:%d rxPkt/s:%.2f "+
 			"txPkt:%d txErr:%d txPkt/s:%.2f",
 			peer.State(),
 			stats.rdBlk-prevStats.rdBlk,
-			stats.rdMiss-prevStats.rdMiss,
-			stats.rdStale-prevStats.rdStale,
-			stats.rdData-prevStats.rdData,
-			stats.rdKeep-prevStats.rdKeep,
+			stats.rdBlkMiss-prevStats.rdBlkMiss,
+			stats.rdBlkStale-prevStats.rdBlkStale,
+			stats.rdBlkData-prevStats.rdBlkData,
+			stats.rdBlkKeep-prevStats.rdBlkKeep,
 			stats.rdErr-prevStats.rdErr,
 			float64(stats.rdBlk-prevStats.rdBlk)/sec,
 			stats.wrBlk-prevStats.wrBlk,
-			stats.wrData-prevStats.wrData,
-			stats.wrKeep-prevStats.wrKeep,
+			stats.wrBlkData-prevStats.wrBlkData,
+			stats.wrBlkKeep-prevStats.wrBlkKeep,
 			stats.wrErr-prevStats.wrErr,
 			float64(stats.wrBlk-prevStats.wrBlk)/sec,
 			stats.rxPkt-prevStats.rxPkt,
