@@ -42,7 +42,7 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 
 	block, err := NewBlockFromBytes(buf)
 	if err != nil {
-		stats.rdErr++
+		stats.rdBlkErr++
 		return nil, fmt.Errorf("%w: %s", ErrBlock, err)
 	}
 

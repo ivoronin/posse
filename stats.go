@@ -7,6 +7,7 @@ import (
 
 type Stats struct {
 	rdBlk      uint64
+	rdBlkErr   uint64
 	rdBlkMiss  uint64
 	rdBlkStale uint64
 	rdBlkData  uint64
@@ -31,7 +32,7 @@ func reportStats(st *time.Ticker, peer *Peer) {
 	for currTime := range st.C {
 		sec := currTime.Sub(prevTime).Seconds()
 		log.Printf("stats: peer:%s "+
-			"rdBlk:%d rdBlkMiss:%d rdBlkStale:%d rdBlkData:%d rdBlkKeep:%d "+
+			"rdBlk:%d rdBlkErr:%d rdBlkMiss:%d rdBlkStale:%d rdBlkData:%d rdBlkKeep:%d "+
 			"rdErr:%d rdBlk/s:%.2f "+
 			"wrBlk:%d wrBlkData:%d wrBlkKeep:%d "+
 			"wrErr:%d wrBlk/s:%.2f "+
@@ -39,6 +40,7 @@ func reportStats(st *time.Ticker, peer *Peer) {
 			"txPkt:%d txErr:%d txPkt/s:%.2f",
 			peer.State(),
 			stats.rdBlk-prevStats.rdBlk,
+			stats.rdBlkErr-prevStats.rdBlkErr,
 			stats.rdBlkMiss-prevStats.rdBlkMiss,
 			stats.rdBlkStale-prevStats.rdBlkStale,
 			stats.rdBlkData-prevStats.rdBlkData,
