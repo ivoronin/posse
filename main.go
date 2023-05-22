@@ -9,11 +9,8 @@ import (
 )
 
 // reads packets from disk and puts them into rx queue
-func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
+func diskRx(disk *Disk, rt *time.Ticker, peer *Peer, rxq chan<- []byte) {
 	var prevID uint32
-	var numStaleReads uint64
-
-	peerStatus.Log()
 
 	for range rt.C {
 		block, err := disk.ReadBlock()
@@ -21,14 +18,11 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 			// ReadBlock can return ErrBlock because peer had not yet written
 			// anything to it's wblk and it is containing some garbage at the moment.
 			// Such errors must be silenced.
-			if peerStatus == Init && errors.Is(err, ErrBlock) {
+			if peer.State() == PeerStateInit && errors.Is(err, ErrBlock) {
 				continue
 			}
 			log.Printf("error reading from disk: %s", err)
-			if peerStatus != Unknown {
-				peerStatus = Unknown
-				peerStatus.Log()
-			}
+			peer.Event(PeerEventBlockReadErr)
 			continue
 		}
 
@@ -40,26 +34,17 @@ func diskRx(disk *Disk, rt *time.Ticker, maxStale uint64, rxq chan<- []byte) {
 
 		// Block didn't changed since last read
 		if block.ID == prevID {
-			numStaleReads++
+			peer.Event(PeerEventBlockReadStale)
 			stats.rdStale++
-			if peerStatus != Down && numStaleReads >= maxStale {
-				peerStatus = Down
-				peerStatus.Log()
-			}
 			continue
 		}
+		peer.Event(PeerEventBlockReadNew)
 
-		if peerStatus == Up && block.ID-prevID > 1 {
+		if block.ID-prevID > 1 {
 			stats.rdMiss++
 		}
 
-		numStaleReads = 0
 		prevID = block.ID
-
-		if peerStatus != Up {
-			peerStatus = Up
-			peerStatus.Log()
-		}
 
 		if block.Type == Data {
 			stats.rdData++
@@ -164,14 +149,16 @@ func main() {
 	rt := time.NewTicker(tickDuration)
 	wt := time.NewTicker(tickDuration)
 
-	go diskRx(disk, rt, *maxStale, rxq)
+	peer := NewPeer(*maxStale)
+
+	go diskRx(disk, rt, peer, rxq)
 	go diskTx(disk, wt, *maxStale, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
 
 	if *statsInt != 0 {
 		st := time.NewTicker(*statsInt)
-		go reportStats(st)
+		go reportStats(st, peer)
 	}
 
 	log.Printf("started up, running on %s", tun.Name())

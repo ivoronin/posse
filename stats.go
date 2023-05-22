@@ -24,7 +24,7 @@ type Stats struct {
 
 var stats Stats
 
-func reportStats(st *time.Ticker) {
+func reportStats(st *time.Ticker, peer *Peer) {
 	var prevStats Stats
 	prevTime := time.Now()
 
@@ -37,7 +37,7 @@ func reportStats(st *time.Ticker) {
 			"wrErr:%d wrBlk/s:%.2f "+
 			"rxPkt:%d rxErr:%d rxPkt/s:%.2f "+
 			"txPkt:%d txErr:%d txPkt/s:%.2f",
-			peerStatus,
+			peer.State(),
 			stats.rdBlk-prevStats.rdBlk,
 			stats.rdMiss-prevStats.rdMiss,
 			stats.rdStale-prevStats.rdStale,
