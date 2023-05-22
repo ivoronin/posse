@@ -49,14 +49,11 @@ func (f *FSM) Event(evt Event) {
 				if t.MinTimes != 0 {
 					if f.lastEventTimes >= t.MinTimes {
 						f.makeTransit(t)
-						return
-					} else {
-						return
 					}
 				} else {
 					f.makeTransit(t)
-					return
 				}
+				return
 			}
 		}
 	}
