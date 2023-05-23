@@ -28,6 +28,10 @@ func main() {
 		errx("rblk and wblk values can't be equal")
 	}
 
+	if *maxStale == 0 {
+		errx("maxstale must be greater than 0")
+	}
+
 	tun, err := NewTUN(*tunName, PayloadMaxSize, *localAddr, *remoteAddr)
 	if err != nil {
 		errx("error setting up tun device: %s", err)
