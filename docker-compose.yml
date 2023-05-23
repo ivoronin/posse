@@ -12,7 +12,15 @@ services:
       PEER: 10.0.0.2/32
       WBLK: 0
       RBLK: 1
+      PROMADDR: 0.0.0.0:19042
     network_mode: host
     cap_add:
       - NET_ADMIN
     restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    volumes:
+      - ./examples/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+    network_mode: host
