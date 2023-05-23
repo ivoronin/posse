@@ -65,7 +65,7 @@ func diskTx(disk *Disk, wt *time.Ticker, fsm *fsm.FSM, txq <-chan []byte) {
 
 		if len(txq) == 0 {
 			fsm.Event(PeerTxEventBlockSkipped)
-			if fsm.CurrentState != PeerTxStateDowntime {
+			if fsm.CurrentState != PeerTxStateIdle {
 				continue
 			}
 			block = NewBlock(nil, blkSeq, Keepalive)

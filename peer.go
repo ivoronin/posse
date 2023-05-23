@@ -12,9 +12,9 @@ var (
 	PeerRxStateUp    fsm.State = "up"
 	PeerRxStateError fsm.State = "error"
 
-	PeerTxStateUp       fsm.State = "up"
-	PeerTxStateDowntime fsm.State = "downtime"
-	PeerTxStateError    fsm.State = "error"
+	PeerTxStateUp    fsm.State = "up"
+	PeerTxStateIdle  fsm.State = "idle"
+	PeerTxStateError fsm.State = "error"
 )
 
 var (
@@ -65,7 +65,7 @@ func NewPeer(maxStale uint64) *Peer {
 		peerRxStateChanged,
 	)
 
-	AllTxStates := []fsm.State{PeerTxStateUp, PeerTxStateDowntime, PeerTxStateError}
+	AllTxStates := []fsm.State{PeerTxStateUp, PeerTxStateIdle, PeerTxStateError}
 	peer.TxFSM = fsm.NewFSM(
 		PeerTxStateUp,
 		[]fsm.Transition{
@@ -77,7 +77,7 @@ func NewPeer(maxStale uint64) *Peer {
 			{
 				Evt:      PeerTxEventBlockSkipped,
 				Src:      AllTxStates,
-				Dst:      PeerTxStateDowntime,
+				Dst:      PeerTxStateIdle,
 				MinTimes: uint(maxStale - 1),
 			},
 			{
