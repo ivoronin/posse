@@ -52,7 +52,7 @@ func diskRx(disk *Disk, rt *time.Ticker, fsm *fsm.FSM, rxq chan<- []byte) {
 			metrics.RdBlkData.Inc()
 			rxq <- block.Payload
 		} else if block.Type == Keepalive {
-			metrics.RdBlkData.Inc()
+			metrics.RdBlkKeep.Inc()
 		}
 	}
 }
