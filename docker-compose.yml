@@ -12,6 +12,7 @@ services:
       PEER: 10.0.0.2/32
       WBLK: 0
       RBLK: 1
+      HZ: 100
       PROMADDR: 0.0.0.0:19042
     network_mode: host
     cap_add:

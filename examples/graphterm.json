@@ -1,0 +1,231 @@
+{
+    "version": "v1",
+    "datasources": {
+        "prometheus": {
+            "prometheus": {
+                "address": "http://127.0.0.1:9090"
+            }
+        }
+    },
+    "dashboard": {
+        "grid": {
+            "maxWidth": 100
+        },
+        "widgets": [
+            {
+                "title": "Peer RX State",
+                "gridpos": {
+                    "w": 50
+                },
+                "singlestat": {
+                    "query": {
+                        "datasourceID": "prometheus",
+                        "expr": "peer_rx_state"
+                    },
+                    "valueText": "{{ if (eq .value \"0\") }}INIT{{ else if (eq .value \"1\") }}DOWN{{else if (eq .value \"2\") }}UP{{else}}ERROR{{end}}",
+                    "unit": "none"
+                }
+            },
+            {
+                "title": "Peer TX State",
+                "gridpos": {
+                    "w": 50
+                },
+                "singlestat": {
+                    "query": {
+                        "datasourceID": "prometheus",
+                        "expr": "sum(peer_tx_state)"
+                    },
+                    "valueText": "{{ if (eq .value \"0\") }}UP{{ else if (eq .value \"1\") }}IDLE{{else}}ERROR{{end}}",
+                    "unit": "none"
+                }
+            },
+            {
+                "title": "Network I/O (Packets)",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "short",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(packets_tx[30s])",
+                            "legend": "txPkt/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(packets_rx[30s])",
+                            "legend": "rxPkt/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(tx_errors[30s])",
+                            "legend": "txErr/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(rx_errors[30s])",
+                            "legend": "rxErr/s"
+                        }
+                    ]
+                }
+            },
+            {
+                "title": "Network I/O (Bytes)",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "byte",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(bytes_tx[30s])",
+                            "legend": "txBytes/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(bytes_rx[30s])",
+                            "legend": "rxBytes/s"
+                        }
+                    ]
+                }
+            },
+            {
+                "title": "Disk I/O",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "short",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_read[30s])",
+                            "legend": "rdBlk/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_written[30s])",
+                            "legend": "wrBlk/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(read_errors[30s])",
+                            "legend": "rdErr/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(write_errors[30s])",
+                            "legend": "wrErr/s"
+                        }
+                    ]
+                }
+            },
+            {
+                "title": "Service Time",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "seconds",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "read_service_time_sum / read_service_time_count",
+                            "legend": "rdSvcTm"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "write_service_time_sum / write_service_time_count",
+                            "legend": "wrSvcTm"
+                        }
+                    ]
+                }
+            },
+            {
+                "title": "Read Blocks",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "short",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_read_data[30s])",
+                            "legend": "rdBlkData/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_read_keepalive[30s])",
+                            "legend": "rdBlkKeep/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_read_stale[30s])",
+                            "legend": "rdBlkStale/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_read_err[30s])",
+                            "legend": "rdBlkErr/s"
+                        }
+                    ]
+                }
+            },
+            {
+                "title": "Written Blocks",
+                "gridpos": {
+                    "w": 50
+                },
+                "graph": {
+                    "visualization": {
+                        "yAxis": {
+                            "unit": "short",
+                            "decimals": 2
+                        }
+                    },
+                    "queries": [
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_written_data[30s])",
+                            "legend": "wrBlkData/s"
+                        },
+                        {
+                            "datasourceID": "prometheus",
+                            "expr": "rate(blocks_written_keepalive[30s])",
+                            "legend": "wrBlkKeep/s"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

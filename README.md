@@ -36,7 +36,7 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 - `txqlen` - Transmit queue length. Env var `TXQLEN`. Optional. Defaults to 16.
 - `rxqlen` - Transmit queue length. Env var `RXQLEN`. Optional. Defaults to 16.
 - `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Env var `HZ`. Optional. Defaults to 10.
-- `promaddr` - Addr:port to listen on for prometheus queries. Env var `PROMADDR`. Optional. Defaults to ''.
+- `promaddr` - Addr:port to listen on for prometheus queries. Env var `PROMADDR`. Optional. Defaults to '' (feature disabled).
 - `maxstale` - Number of stale reads before declaring peer dead. Env var `MAXSTALE`. Optional. Defaults to 5.
 
 ## Performance
@@ -47,6 +47,14 @@ It is also recommended to change the TCP congestion control algorithm to BBR on 
 # sysctl -w net.ipv4.tcp_congestion_control=bbr
 # sysctl -w net.core.default_qdisc=fq
 ```
+
+Posse can transfer data at a rate of approximately 45 kilobytes per second at a frequency of 100 Hertz.
+
+## Monitoring
+
+Posse can export metrics to Prometheus. The `examples` directory contains a sample configuration files for Prometheus and [Grafterm](https://github.com/slok/grafterm).
+
+![Grafterm](grafterm.png)
 
 ## Docker support
 Posse can be run in a containerized environment. For more information, please refer to the included Dockerfile and docker-compose.yml files.
