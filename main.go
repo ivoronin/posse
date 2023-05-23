@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/ivoronin/posse/metrics"
 )
 
 func main() {
@@ -18,8 +19,8 @@ func main() {
 		txQLen     = kingpin.Flag("txqlen", "TX queue length").Envar("TXQLEN").Default("16").Uint()
 		rxQLen     = kingpin.Flag("rxqlen", "RX queue length").Envar("RXQLEN").Default("16").Uint()
 		hz         = kingpin.Flag("hz", "Disk polling and writing frequency in hz").Short('f').Envar("HZ").Default("10").Uint()
-		statsInt   = kingpin.Flag("stats", "Interval between periodic stats reports").Short('i').Envar("STATS").Default("60s").Duration()
 		maxStale   = kingpin.Flag("maxstale", "Number of stale reads before declaring peer dead").Envar("MAXSTALE").Default("5").Uint64()
+		promAddr   = kingpin.Flag("promaddr", "Addr:Port to listen for prometheus queries").Envar("PROMADDR").Default("").String()
 	)
 
 	kingpin.Parse()
@@ -42,6 +43,10 @@ func main() {
 		errx("error setting up disk device: %s", err)
 	}
 
+	if *promAddr != "" {
+		go metrics.Serve(*promAddr)
+	}
+
 	// disk -> tun queue
 	rxq := make(chan []byte, *rxQLen)
 	// tun -> disk queue
@@ -57,11 +62,6 @@ func main() {
 	go diskTx(disk, wt, peer.TxFSM, txq)
 	go tunRx(tun, txq)
 	go tunTx(tun, rxq)
-
-	if *statsInt != 0 {
-		st := time.NewTicker(*statsInt)
-		go reportStats(st, peer)
-	}
 
 	log.Printf("started up, running on %s", tun.Name())
 

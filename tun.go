@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/ivoronin/posse/metrics"
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 )
@@ -65,20 +66,20 @@ func NewTUN(tunName string, mtu int, localAddr string, remoteAddr string) (*TUN,
 func (t *TUN) Read(buf []byte) (int, error) {
 	n, err := t.iface.Read(buf)
 	if err != nil {
-		stats.rxErr++
+		metrics.RxErr.Inc()
 		return n, err
 	}
-	stats.rxPkt++
+	metrics.RxPkt.Inc()
 	return n, err
 }
 
 func (t *TUN) Write(buf []byte) (int, error) {
 	n, err := t.iface.Write(buf)
 	if err != nil {
-		stats.txErr++
+		metrics.TxErr.Inc()
 		return n, err
 	}
-	stats.txPkt++
+	metrics.TxPkt.Inc()
 	return n, err
 }
 

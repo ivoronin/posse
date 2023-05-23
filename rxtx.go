@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ivoronin/posse/fsm"
+	"github.com/ivoronin/posse/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // reads packets from disk and puts them into rx queue
@@ -35,22 +37,22 @@ func diskRx(disk *Disk, rt *time.Ticker, fsm *fsm.FSM, rxq chan<- []byte) {
 		// Block didn't changed since last read
 		if block.ID == prevID {
 			fsm.Event(PeerRxEventBlockReadStale)
-			stats.rdBlkStale++
+			metrics.RdBlkStale.Inc()
 			continue
 		}
 		fsm.Event(PeerRxEventBlockReadNew)
 
 		if block.ID-prevID > 1 {
-			stats.rdBlkMiss += uint64(block.ID - prevID - 1)
+			metrics.RdBlkMiss.Add(float64(block.ID - prevID - 1))
 		}
 
 		prevID = block.ID
 
 		if block.Type == Data {
-			stats.rdBlkData++
+			metrics.RdBlkData.Inc()
 			rxq <- block.Payload
 		} else if block.Type == Keepalive {
-			stats.rdBlkKeep++
+			metrics.RdBlkData.Inc()
 		}
 	}
 }
@@ -58,7 +60,7 @@ func diskRx(disk *Disk, rt *time.Ticker, fsm *fsm.FSM, rxq chan<- []byte) {
 // reads packets from tx queue and writes them to disk device
 func diskTx(disk *Disk, wt *time.Ticker, fsm *fsm.FSM, txq <-chan []byte) {
 	var blkSeq uint32
-	var wrBlkStat *uint64
+	var wrBlkMetric prometheus.Counter
 
 	for range wt.C {
 		var block *Block
@@ -69,11 +71,11 @@ func diskTx(disk *Disk, wt *time.Ticker, fsm *fsm.FSM, txq <-chan []byte) {
 				continue
 			}
 			block = NewBlock(nil, blkSeq, Keepalive)
-			wrBlkStat = &stats.wrBlkKeep
+			wrBlkMetric = metrics.WrBlkKeep
 		} else {
 			payload := <-txq
 			block = NewBlock(payload, blkSeq, Data)
-			wrBlkStat = &stats.wrBlkData
+			wrBlkMetric = metrics.WrBlkData
 		}
 
 		err := disk.WriteBlock(block)
@@ -83,7 +85,7 @@ func diskTx(disk *Disk, wt *time.Ticker, fsm *fsm.FSM, txq <-chan []byte) {
 			continue
 		}
 		fsm.Event(PeerTxEventBlockWritten)
-		*wrBlkStat++
+		wrBlkMetric.Inc()
 		blkSeq++
 	}
 }

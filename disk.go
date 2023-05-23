@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"syscall"
-	"time"
+
+	"github.com/ivoronin/posse/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Disk struct {
@@ -35,34 +37,35 @@ func NewDisk(diskPath string, rOff uint64, wOff uint64) (*Disk, error) {
 func (disk *Disk) ReadBlock() (*Block, error) {
 	buf := make([]byte, BlockSize)
 
-	s := time.Now()
+	t := prometheus.NewTimer(metrics.RdSvcTime)
 	_, err := disk.file.ReadAt(buf, disk.rOff)
 	if err != nil {
-		stats.rdErr++
+		t.ObserveDuration()
+		metrics.RdErr.Inc()
 		return nil, err
 	}
-	stats.rdSvcTime += uint64(time.Since(s).Microseconds())
+	t.ObserveDuration()
 
 	block, err := NewBlockFromBytes(buf)
 	if err != nil {
-		stats.rdBlkErr++
+		metrics.RdBlkErr.Inc()
 		return nil, fmt.Errorf("%w: %s", ErrBlock, err)
 	}
 
-	stats.rdBlk++
+	metrics.RdBlk.Inc()
 	return block, nil
 }
 
 func (disk *Disk) WriteBlock(block *Block) error {
 	buf := block.ToBytes()
-	s := time.Now()
+	t := prometheus.NewTimer(metrics.WrSvcTime)
 	_, err := disk.file.WriteAt(buf, disk.wOff)
 	if err != nil {
-		stats.wrErr++
+		t.ObserveDuration()
+		metrics.WrErr.Inc()
 		return err
 	}
-	stats.wrSvcTime += uint64(time.Since(s).Microseconds())
-
-	stats.wrBlk++
+	t.ObserveDuration()
+	metrics.WrBlk.Inc()
 	return nil
 }

@@ -36,7 +36,7 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 - `txqlen` - Transmit queue length. Env var `TXQLEN`. Optional. Defaults to 16.
 - `rxqlen` - Transmit queue length. Env var `RXQLEN`. Optional. Defaults to 16.
 - `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Env var `HZ`. Optional. Defaults to 10.
-- `stats` - Interval between periodic stats reports. Env var `STATS`. Optional. Defaults to '60s'. Set to 0 to disable reports.
+- `promaddr` - Addr:port to listen on for prometheus queries. Env var `PROMADDR`. Optional. Defaults to ''.
 - `maxstale` - Number of stale reads before declaring peer dead. Env var `MAXSTALE`. Optional. Defaults to 5.
 
 ## Performance
@@ -47,30 +47,6 @@ It is also recommended to change the TCP congestion control algorithm to BBR on 
 # sysctl -w net.ipv4.tcp_congestion_control=bbr
 # sysctl -w net.core.default_qdisc=fq
 ```
-
-## Statistics counters
-Posse will output statistics counters every `stats` interval.
-- `rdBlk` - Number of blocks successfully read from disk
-- `rdBlkErr`- Number of corrupted or malformed blocks read
-- `rdBlkMiss` - Number of blocks missed between reads
-- `rdBlkStale` - Number of stale blocks read
-- `rdBlkData` - Number of data blocks read
-- `rdBlkKeep` - Number of keepalive blocks read
-- `rdErr` - Number of read errors
-- `rdBlk/s` - Average blocks read per second
-- `rdSvcTimeAvg` - Avegage read service time
-- `wrBlk` - Number of blocks successfuly written to disk
-- `wrBlkData` - Number of data blocks written
-- `wrBlkKeep` - Number of keepalive blocks written
-- `wrErr` - Number of write errors
-- `wrBlk/s` - Average blocks written per second
-- `wrSvcTimeAvg` - Average write service time
-- `rxPkt` - Number of packets received from tun device
-- `rxErr` - Number of receive errors
-- `rxPkt/s` - Average number of packets received per second
-- `txPkt` - Number of packets transmitted to tun device
-- `txErr` - Number of transmit errors
-- `txPkt/s` - Average number of packets transmitted per second
 
 ## Docker support
 Posse can be run in a containerized environment. For more information, please refer to the included Dockerfile and docker-compose.yml files.
