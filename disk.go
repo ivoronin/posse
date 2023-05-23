@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 )
 
 type Disk struct {
@@ -34,11 +35,13 @@ func NewDisk(diskPath string, rOff uint64, wOff uint64) (*Disk, error) {
 func (disk *Disk) ReadBlock() (*Block, error) {
 	buf := make([]byte, BlockSize)
 
+	s := time.Now()
 	_, err := disk.file.ReadAt(buf, disk.rOff)
 	if err != nil {
 		stats.rdErr++
 		return nil, err
 	}
+	stats.rdSvcTime += uint64(time.Since(s).Microseconds())
 
 	block, err := NewBlockFromBytes(buf)
 	if err != nil {
@@ -52,11 +55,13 @@ func (disk *Disk) ReadBlock() (*Block, error) {
 
 func (disk *Disk) WriteBlock(block *Block) error {
 	buf := block.ToBytes()
+	s := time.Now()
 	_, err := disk.file.WriteAt(buf, disk.wOff)
 	if err != nil {
 		stats.wrErr++
 		return err
 	}
+	stats.wrSvcTime += uint64(time.Since(s).Microseconds())
 
 	stats.wrBlk++
 	return nil
