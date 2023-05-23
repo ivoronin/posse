@@ -82,6 +82,11 @@ var RxPkt = promauto.NewCounter(prometheus.CounterOpts{
 	Help: "The total number of recieved packets",
 })
 
+var RxBytes = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "bytes_rx",
+	Help: "The total number of recieved bytes",
+})
+
 var RxErr = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "rx_errors",
 	Help: "The total number of receive errors",
@@ -90,6 +95,11 @@ var RxErr = promauto.NewCounter(prometheus.CounterOpts{
 var TxPkt = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "packets_tx",
 	Help: "The total number of transmitted packets",
+})
+
+var TxBytes = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "bytes_tx",
+	Help: "The total number of sent bytes",
 })
 
 var TxErr = promauto.NewCounter(prometheus.CounterOpts{

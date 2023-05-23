@@ -69,6 +69,7 @@ func (t *TUN) Read(buf []byte) (int, error) {
 		metrics.RxErr.Inc()
 		return n, err
 	}
+	metrics.RxBytes.Add(float64(len(buf)))
 	metrics.RxPkt.Inc()
 	return n, err
 }
@@ -79,6 +80,7 @@ func (t *TUN) Write(buf []byte) (int, error) {
 		metrics.TxErr.Inc()
 		return n, err
 	}
+	metrics.TxBytes.Add(float64(len(buf)))
 	metrics.TxPkt.Inc()
 	return n, err
 }
