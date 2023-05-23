@@ -97,6 +97,16 @@ var TxErr = promauto.NewCounter(prometheus.CounterOpts{
 	Help: "The total number of transmit errors",
 })
 
+var PeerRxState = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "peer_rx_state",
+	Help: "Current peer rx state",
+})
+
+var PeerTxState = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "peer_tx_state",
+	Help: "Current peer tx state",
+})
+
 func Serve(promAddr string) {
 	promUrl := url.URL{
 		Scheme: "http",

@@ -4,27 +4,43 @@ import (
 	"log"
 
 	"github.com/ivoronin/posse/fsm"
+	"github.com/ivoronin/posse/metrics"
 )
 
-var (
-	PeerRxStateInit  fsm.State = "init"
-	PeerRxStateDown  fsm.State = "down"
-	PeerRxStateUp    fsm.State = "up"
-	PeerRxStateError fsm.State = "error"
-
-	PeerTxStateUp    fsm.State = "up"
-	PeerTxStateIdle  fsm.State = "idle"
-	PeerTxStateError fsm.State = "error"
+const (
+	PeerRxStateInit fsm.State = iota
+	PeerRxStateDown
+	PeerRxStateUp
+	PeerRxStateError
 )
 
-var (
-	PeerRxEventBlockReadErr   fsm.Event = "BlockReadErr"
-	PeerRxEventBlockReadStale fsm.Event = "BlockReadStale"
-	PeerRxEventBlockReadNew   fsm.Event = "BlockReadNew"
+const (
+	PeerTxStateUp fsm.State = iota
+	PeerTxStateIdle
+	PeerTxStateError
+)
 
-	PeerTxEventBlockWritten  fsm.Event = "BlockWritten"
-	PeerTxEventBlockWriteErr fsm.Event = "BlockWriteErr"
-	PeerTxEventBlockSkipped  fsm.Event = "BlockSkipped"
+var PeerRxStateNames = map[fsm.State]string{
+	PeerRxStateInit:  "init",
+	PeerRxStateDown:  "down",
+	PeerRxStateUp:    "up",
+	PeerRxStateError: "error",
+}
+
+var PeerTxStateNames = map[fsm.State]string{
+	PeerTxStateUp:    "ip",
+	PeerTxStateIdle:  "idle",
+	PeerTxStateError: "error",
+}
+
+const (
+	PeerRxEventBlockReadErr fsm.Event = iota
+	PeerRxEventBlockReadStale
+	PeerRxEventBlockReadNew
+
+	PeerTxEventBlockWritten
+	PeerTxEventBlockWriteErr
+	PeerTxEventBlockSkipped
 )
 
 type Peer struct {
@@ -36,7 +52,15 @@ func peerRxStateChanged(from fsm.State, to fsm.State, evt fsm.Event) {
 	if from == to {
 		return
 	}
-	log.Printf("peer rx status: %s -> %s", from, to)
+	metrics.PeerRxState.Set(float64(to))
+	log.Printf("peer rx status: %s -> %s", PeerRxStateNames[from], PeerRxStateNames[to])
+}
+
+func peerTxStateChanged(from fsm.State, to fsm.State, evt fsm.Event) {
+	if from == to {
+		return
+	}
+	metrics.PeerTxState.Set(float64(to))
 }
 
 func NewPeer(maxStale uint64) *Peer {
@@ -86,7 +110,7 @@ func NewPeer(maxStale uint64) *Peer {
 				Dst: PeerTxStateError,
 			},
 		},
-		nil,
+		peerTxStateChanged,
 	)
 	return peer
 }

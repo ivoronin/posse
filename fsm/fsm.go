@@ -10,9 +10,9 @@ type FSM struct {
 	lastEventTimes uint
 }
 
-type State string
+type State int
 
-type Event string
+type Event int
 
 type Transition struct {
 	Evt      Event
