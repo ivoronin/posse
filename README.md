@@ -36,7 +36,7 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 - `txqlen` - Transmit queue length. Env var `TXQLEN`. Optional. Defaults to 16.
 - `rxqlen` - Transmit queue length. Env var `RXQLEN`. Optional. Defaults to 16.
 - `hz` - Frequency in Hz at which the disk writing and reading operations are performed. Must be equal to `hz` value on the remote host. Env var `HZ`. Optional. Defaults to 10.
-- `stat` - Interval between periodic stats reports. Env var `STATS`. Optional. Defaults to '60s'. Set to 0 to disable reports.
+- `stats` - Interval between periodic stats reports. Env var `STATS`. Optional. Defaults to '60s'. Set to 0 to disable reports.
 - `maxstale` - Number of stale reads before declaring peer dead. Env var `MAXSTALE`. Optional. Defaults to 5.
 
 ## Performance
