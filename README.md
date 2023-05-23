@@ -48,5 +48,29 @@ It is also recommended to change the TCP congestion control algorithm to BBR on 
 # sysctl -w net.core.default_qdisc=fq
 ```
 
+## Statistics counters
+Posse will output statistics counters every `stats` interval.
+- `rdBlk` - Number of blocks successfully read from disk
+- `rdBlkErr`- Number of corrupted or malformed blocks read
+- `rdBlkMiss` - Number of blocks missed between reads
+- `rdBlkStale` - Number of stale blocks read
+- `rdBlkData` - Number of data blocks read
+- `rdBlkKeep` - Number of keepalive blocks read
+- `rdErr` - Number of read errors
+- `rdBlk/s` - Average blocks read per second
+- `rdSvcTimeAvg` - Avegage read service time
+- `wrBlk` - Number of blocks successfuly written to disk
+- `wrBlkData` - Number of data blocks written
+- `wrBlkKeep` - Number of keepalive blocks written
+- `wrErr` - Number of write errors
+- `wrBlk/s` - Average blocks written per second
+- `wrSvcTimeAvg` - Average write service time
+- `rxPkt` - Number of packets received from tun device
+- `rxErr` - Number of receive errors
+- `rxPkt/s` - Average number of packets received per second
+- `txPkt` - Number of packets transmitted to tun device
+- `txErr` - Number of transmit errors
+- `txPkt/s` - Average number of packets transmitted per second
+
 ## Docker support
 Posse can be run in a containerized environment. For more information, please refer to the included Dockerfile and docker-compose.yml files.
