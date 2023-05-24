@@ -1,4 +1,4 @@
-package main
+package block
 
 import (
 	"encoding/binary"
@@ -10,8 +10,8 @@ import (
 type BlockType uint8
 
 const (
-	Data BlockType = iota
-	Keepalive
+	TypeData BlockType = iota
+	TypeKeepalive
 )
 
 type Block struct {
@@ -57,14 +57,14 @@ func alignedByteSlice(size uint, align uint) []byte {
 
 func NewBlockFromBytes(buf []byte) (*Block, error) {
 	if len(buf) != BlockSize {
-		panicf("invalid block size: %d", len(buf))
+		panic(fmt.Sprintf("invalid block size: %d", len(buf)))
 	}
 
-	block := new(Block)
-	blockCrc := binary.BigEndian.Uint32(buf[crcOffset:])
+	blk := new(Block)
+	blkCrc := binary.BigEndian.Uint32(buf[crcOffset:])
 	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
 
-	if blockCrc != crc {
+	if blkCrc != crc {
 		return nil, fmt.Errorf("wrong crc")
 	}
 
@@ -73,10 +73,10 @@ func NewBlockFromBytes(buf []byte) (*Block, error) {
 		return nil, fmt.Errorf("wrong magic")
 	}
 
-	block.ID = binary.BigEndian.Uint32(buf[idOffset:])
+	blk.ID = binary.BigEndian.Uint32(buf[idOffset:])
 
-	block.Type = BlockType(buf[typeOffset])
-	if (block.Type != Data) && (block.Type != Keepalive) {
+	blk.Type = BlockType(buf[typeOffset])
+	if (blk.Type != TypeData) && (blk.Type != TypeKeepalive) {
 		return nil, fmt.Errorf("wrong type")
 	}
 
@@ -85,33 +85,33 @@ func NewBlockFromBytes(buf []byte) (*Block, error) {
 		return nil, fmt.Errorf("payload length too big")
 	}
 
-	block.Payload = make([]byte, pLen)
-	copy(block.Payload, buf[payloadOffset:payloadOffset+pLen])
+	blk.Payload = make([]byte, pLen)
+	copy(blk.Payload, buf[payloadOffset:payloadOffset+pLen])
 
-	return block, nil
+	return blk, nil
 }
 
 func NewBlock(payload []byte, id uint32, typ BlockType) *Block {
 	pLen := len(payload)
 	if pLen > PayloadMaxSize {
-		panicf("payload size is too big: %d", len(payload))
+		panic(fmt.Sprintf("payload size is too big: %d", len(payload)))
 	}
-	block := new(Block)
-	block.Type = typ
-	block.ID = id
-	block.Payload = make([]byte, pLen)
-	copy(block.Payload, payload)
+	blk := new(Block)
+	blk.Type = typ
+	blk.ID = id
+	blk.Payload = make([]byte, pLen)
+	copy(blk.Payload, payload)
 
-	return block
+	return blk
 }
 
-func (block *Block) ToBytes() []byte {
+func (b *Block) ToBytes() []byte {
 	buf := alignedByteSlice(BlockSize, BlockSize)
 	buf[0] = blockMagic
-	binary.BigEndian.PutUint32(buf[idOffset:], block.ID)
-	buf[typeOffset] = uint8(block.Type)
-	binary.BigEndian.PutUint16(buf[lenOffset:], uint16(len(block.Payload)))
-	copy(buf[payloadOffset:payloadOffset+PayloadMaxSize], block.Payload)
+	binary.BigEndian.PutUint32(buf[idOffset:], b.ID)
+	buf[typeOffset] = uint8(b.Type)
+	binary.BigEndian.PutUint16(buf[lenOffset:], uint16(len(b.Payload)))
+	copy(buf[payloadOffset:payloadOffset+PayloadMaxSize], b.Payload)
 	crc := crc32.ChecksumIEEE(buf[0:crcOffset])
 	binary.BigEndian.PutUint32(buf[crcOffset:], crc)
 

@@ -1,4 +1,4 @@
-package main
+package tun
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 type TUN struct {
-	iface water.Interface
+	iface *water.Interface
 }
 
 func NewTUN(tunName string, mtu int, localAddr string, remoteAddr string) (*TUN, error) {
@@ -60,7 +60,10 @@ func NewTUN(tunName string, mtu int, localAddr string, remoteAddr string) (*TUN,
 		return nil, fmt.Errorf("error setting link up: %s", err)
 	}
 
-	return &TUN{iface: *iface}, nil
+	tn := new(TUN)
+	tn.iface = iface
+
+	return tn, nil
 }
 
 func (t *TUN) Read(buf []byte) (int, error) {

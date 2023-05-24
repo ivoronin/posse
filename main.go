@@ -5,7 +5,11 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/ivoronin/posse/block"
+	"github.com/ivoronin/posse/disk"
 	"github.com/ivoronin/posse/metrics"
+	"github.com/ivoronin/posse/peer"
+	"github.com/ivoronin/posse/tun"
 )
 
 func main() {
@@ -33,18 +37,14 @@ func main() {
 		errx("maxstale must be greater than 0")
 	}
 
-	tun, err := NewTUN(*tunName, PayloadMaxSize, *localAddr, *remoteAddr)
+	tn, err := tun.NewTUN(*tunName, block.PayloadMaxSize, *localAddr, *remoteAddr)
 	if err != nil {
 		errx("error setting up tun device: %s", err)
 	}
 
-	disk, err := NewDisk(*diskPath, *rBlk, *wBlk)
+	dsk, err := disk.NewDisk(*diskPath, *rBlk, *wBlk)
 	if err != nil {
 		errx("error setting up disk device: %s", err)
-	}
-
-	if *promAddr != "" {
-		go metrics.Serve(*promAddr)
 	}
 
 	// disk -> tun queue
@@ -56,14 +56,17 @@ func main() {
 	rt := time.NewTicker(tickDuration)
 	wt := time.NewTicker(tickDuration)
 
-	peer := NewPeer(*maxStale)
+	peer := peer.NewPeer(*maxStale)
 
-	go diskRx(disk, rt, peer.RxFSM, rxq)
-	go diskTx(disk, wt, peer.TxFSM, txq)
-	go tunRx(tun, txq)
-	go tunTx(tun, rxq)
+	if *promAddr != "" {
+		go metrics.Serve(*promAddr)
+	}
+	go diskRd(dsk, rt, peer.RxFSM, rxq)
+	go diskWr(dsk, wt, peer.TxFSM, txq)
+	go tunRx(tn, txq)
+	go tunTx(tn, rxq)
 
-	log.Printf("started up, running on %s", tun.Name())
+	log.Printf("started up, running on %s", tn.Name())
 
 	// block
 	select {}

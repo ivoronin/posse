@@ -11,7 +11,3 @@ func errx(fmts string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, efmts, args...)
 	os.Exit(1)
 }
-
-func panicf(fmts string, args ...interface{}) {
-	panic(fmt.Sprintf(fmts, args...))
-}
