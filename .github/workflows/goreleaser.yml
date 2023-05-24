@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ !startsWith(github.ref, 'refs/tags/20') }}
         run: echo "flags=--snapshot" >> $GITHUB_ENV
       -
         name: Checkout
