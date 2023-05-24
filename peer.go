@@ -28,7 +28,7 @@ var PeerRxStateNames = map[fsm.State]string{
 }
 
 var PeerTxStateNames = map[fsm.State]string{
-	PeerTxStateUp:    "ip",
+	PeerTxStateUp:    "up",
 	PeerTxStateIdle:  "idle",
 	PeerTxStateError: "error",
 }
