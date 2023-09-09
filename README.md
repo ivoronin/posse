@@ -28,7 +28,7 @@ PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
 ## Options
 
 - `disk` - Path to disk used for sending and receiving packets. It is important to exercise caution when using this disk, as any data on it may be overwritten. Env var `DISK`. Required.
-- `tun` - Tunnel device name. Env var 'TUN'. Optional.
+- `tun` - Tunnel device name. Env var `TUN`. Optional.
 - `addr` - Local IP address for tunnel. Must be equal to `peer` value on the remote host. Env var `ADDR`. Required.
 - `peer` - Remote IP address for tunnel. Must be equal to `addr` value on the remote host. Env var `PEER`. Required.
 - `rblk` - Disk block number to read packets from. Must be equal to `wblk` value on the remote host. Env var `RBLK`. Required.
